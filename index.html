@@ -205,22 +205,52 @@ function makeTree(x,y,z,rng){
   for(let layer=0;layer<4;layer++){const yy=y+trunk-1+layer;const radius=layer===3?1:layer===0?2:2-layer*.15;for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++){if(Math.abs(dx)+Math.abs(dz)>4-layer*.55)continue;if(dx===0&&dz===0&&layer<2)continue;if(rng()>.07)addBlock(x+dx,yy,z+dz,"leaves");}}
 }
 function spawnPosition(){const x=0,z=8;return new THREE.Vector3(x,terrainHeight(x,z)+.52,z);}
-function generateWorld(seed){
-  worldSeed=seed;blocks.clear();const rng=seeded(seed);const half=21;
-  for(let x=-half;x<=half;x++)for(let z=-half;z<=half;z++){
+const CHUNK_SIZE=16,CHUNK_RADIUS=1;
+const generatedChunks=new Set();
+let lastChunkX=Infinity,lastChunkZ=Infinity;
+function generateChunk(cx,cz){
+  const chunkId=`${cx},${cz}`;
+  if(generatedChunks.has(chunkId))return false;
+  generatedChunks.add(chunkId);
+  const rng=seeded((worldSeed ^ Math.imul(cx,0x45d9f3b) ^ Math.imul(cz,0x119de1f3))>>>0);
+  const minX=cx*CHUNK_SIZE,minZ=cz*CHUNK_SIZE;
+  for(let x=minX;x<minX+CHUNK_SIZE;x++)for(let z=minZ;z<minZ+CHUNK_SIZE;z++){
     const h=terrainHeight(x,z);
     for(let y=-2;y<=h;y++){
-      const type=y===-2?"bedrock":y===h?"grass":y>=h-2?"dirt":"stone";addBlock(x,y,z,type);
+      const type=y===-2?"bedrock":y===h?"grass":y>=h-2?"dirt":"stone";
+      addBlock(x,y,z,type);
     }
   }
-  // Scattered trees leave a wide, flat spawn clearing.
-  for(let x=-half+2;x<=half-2;x++)for(let z=-half+2;z<=half-2;z++){
-    if(Math.hypot(x,z-8)<6)continue;
-    const roll=rng();if(roll>.962&&terrainHeight(x,z)>=2)makeTree(x,terrainHeight(x,z),z,rng);
+  // Trees are placed deterministically, so the same seed recreates the same chunk.
+  for(let x=minX+2;x<minX+CHUNK_SIZE-2;x++)for(let z=minZ+2;z<minZ+CHUNK_SIZE-2;z++){
+    if(Math.hypot(x,z-8)<7)continue;
+    if(rng()>.965&&terrainHeight(x,z)>=2)makeTree(x,terrainHeight(x,z),z,rng);
   }
-  // A small grove beyond the clearing creates a visible landmark.
-  [[-10,2],[-12,8],[-9,13],[10,1],[12,8],[9,14],[2,-11],[-4,-13]].forEach(([x,z])=>{if(Math.hypot(x,z-8)>5)makeTree(x,terrainHeight(x,z),z,rng);});
-  rebuildMeshes();
+  return true;
+}
+function updateChunks(force=false){
+  const cx=Math.floor(player.pos.x/CHUNK_SIZE),cz=Math.floor(player.pos.z/CHUNK_SIZE);
+  if(!force&&cx===lastChunkX&&cz===lastChunkZ)return;
+  lastChunkX=cx;lastChunkZ=cz;
+  let changed=false;
+  for(let dx=-CHUNK_RADIUS;dx<=CHUNK_RADIUS;dx++)for(let dz=-CHUNK_RADIUS;dz<=CHUNK_RADIUS;dz++){
+    if(generateChunk(cx+dx,cz+dz))changed=true;
+  }
+  if(changed)rebuildMeshes();
+}
+function generateWorld(seed){
+  worldSeed=seed;blocks.clear();generatedChunks.clear();
+  lastChunkX=Infinity;lastChunkZ=Infinity;
+  // A broad, clear starting area gives the player room to look around and move.
+  for(let x=-5;x<=5;x++)for(let z=3;z<=13;z++){
+    const h=terrainHeight(x,z);
+    for(let y=-2;y<=h;y++){
+      const type=y===-2?"bedrock":y===h?"grass":y>=h-2?"dirt":"stone";
+      addBlock(x,y,z,type);
+    }
+  }
+  // Generate nearby chunks around spawn, then stream more as the player travels.
+  updateChunks(true);
 }
 
 const player={pos:new THREE.Vector3(0,4,8),velocity:new THREE.Vector3(),yaw:0,pitch:-.12,onGround:false};
@@ -310,8 +340,8 @@ function movePlayer(dt){
     player.pos.y=nextFeet;
     if(player.pos.y < -8){player.pos.copy(spawnPosition());player.velocity.set(0,0,0);toast("You returned to the spawn area");}
   }
-  // Keep the world walkable and avoid an accidental fall forever at its edge.
-  player.pos.x=THREE.MathUtils.clamp(player.pos.x,-23,23);player.pos.z=THREE.MathUtils.clamp(player.pos.z,-23,23);
+  // Stream nearby terrain as the player explores; the world is no longer boxed in.
+  updateChunks();
 }
 
 // Decorative low-poly cloud clusters.
