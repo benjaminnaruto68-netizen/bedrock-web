@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#172b22">
+<meta name="description" content="Bedrock Web is an original browser-based voxel sandbox prototype.">
+<title>Bedrock Web — Voxel Sandbox</title>
+<style>
+:root{color-scheme:dark;--glass:rgba(14,25,20,.82);--glass2:rgba(14,25,20,.94);--line:rgba(255,255,255,.18);--mint:#a9ef7d;--gold:#f6d77a;--text:#f6f8f3;--muted:#c5d1c8}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#9acded;color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;touch-action:none;user-select:none}
+button{font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,rgba(67,105,76,.96),rgba(34,64,44,.98));box-shadow:0 4px 12px #07150e55;padding:10px 14px;font-weight:750;transition:transform .12s,filter .12s,border-color .12s}
+button:hover{filter:brightness(1.12);border-color:#ffffff55}button:active{transform:translateY(1px) scale(.985)}button:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+#world{position:fixed;inset:0;z-index:0}#world canvas{display:block;width:100%;height:100%}
+#vignette{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at center,transparent 45%,rgba(5,16,12,.16) 100%)}
+.glass{background:linear-gradient(145deg,rgba(22,39,29,.88),rgba(9,20,15,.84));border:1px solid var(--line);box-shadow:0 10px 30px #06150d55;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+#hud{position:fixed;inset:0;z-index:3;pointer-events:none;display:none}
+#topbar{position:absolute;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+#brand{display:flex;align-items:center;gap:9px;padding:9px 13px;border-radius:14px;font-size:13px;font-weight:950;letter-spacing:1.1px;white-space:nowrap}
+.brandCube{width:20px;height:20px;display:inline-block;background:linear-gradient(135deg,#a9ed75 0 48%,#579e3e 49%);border:2px solid #e3ffc8;border-radius:5px;box-shadow:inset -4px -4px 0 #2f6e2e}
+#stats{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;padding:8px 12px;border-radius:14px;font-size:12px;font-weight:800}
+.statGroup{display:flex;gap:3px;align-items:center;white-space:nowrap}.heart{color:#ff6c6c;text-shadow:0 1px 2px #380d0d}.food{color:#e9b86a;text-shadow:0 1px 2px #3b210a}.statDivider{width:1px;height:18px;background:#ffffff30;margin:0 3px}
+#actions{display:flex;gap:6px;pointer-events:auto}#actions button{font-size:12px;padding:9px 11px;white-space:nowrap}
+#modeBtn{background:linear-gradient(180deg,#526c9b,#344b75)}
+#crosshair{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);filter:drop-shadow(0 1px 3px #000);opacity:.95}
+#crosshair:before,#crosshair:after{content:"";position:absolute;background:#fff;border-radius:2px}#crosshair:before{width:2px;height:20px;left:10px;top:1px}#crosshair:after{height:2px;width:20px;top:10px;left:1px}
+#targetOutline{position:absolute;left:50%;top:calc(50% + 25px);transform:translateX(-50%);font-size:10px;color:#fff;text-shadow:0 2px 4px #000;letter-spacing:.2px;white-space:nowrap;opacity:.85}
+#hotbar{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:5px;padding:7px;border-radius:15px;pointer-events:auto;max-width:calc(100vw - 18px)}
+.slot{position:relative;width:54px;height:56px;flex:0 0 54px;padding:4px 3px;border-radius:9px;background:linear-gradient(145deg,#34453a,#1a2a21);border:2px solid #ffffff35;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;box-shadow:inset 0 1px 0 #ffffff12}
+.slot.selected{border:2px solid #fff;background:linear-gradient(145deg,#526b50,#304c35);box-shadow:0 0 0 2px #a9ef7d,0 0 16px #a9ef7d77}
+.blockIcon{width:25px;height:25px;border:1px solid #ffffff55;border-radius:4px;box-shadow:inset -4px -4px 0 #0002,inset 2px 2px 0 #fff2}
+.slotName{font-size:9px;color:#e8f0e8;line-height:1;max-width:100%;overflow:hidden;text-overflow:ellipsis}.slotCount{position:absolute;right:4px;top:1px;font-size:10px;font-weight:900;text-shadow:0 1px 3px #000}
+#mobileControls{position:absolute;inset:0;pointer-events:none;display:none}
+#joystick{position:absolute;left:max(18px,env(safe-area-inset-left));bottom:calc(max(100px,env(safe-area-inset-bottom) + 90px));width:126px;height:126px;border-radius:50%;border:1px solid #ffffff55;background:radial-gradient(circle,#ffffff0b 0 38%,#07150c77 39% 100%);pointer-events:auto;touch-action:none;box-shadow:inset 0 0 20px #0004}
+#joyKnob{position:absolute;left:39px;top:39px;width:48px;height:48px;border-radius:50%;border:2px solid #ffffffa0;background:linear-gradient(145deg,#dff6d9dd,#7fae8cdd);box-shadow:0 4px 12px #0005;pointer-events:none}
+#mobileActions{position:absolute;right:max(14px,env(safe-area-inset-right));bottom:calc(max(100px,env(safe-area-inset-bottom) + 90px));display:grid;grid-template-columns:repeat(2,62px);gap:8px;pointer-events:auto}
+#mobileActions button{height:54px;padding:4px 2px;font-size:10px;background:linear-gradient(180deg,#314c3aee,#172d20ee);touch-action:none}
+#lookLabel{position:absolute;right:14px;top:75px;font-size:10px;color:#fff;text-shadow:0 2px 4px #000;opacity:.8}
+#hint{position:absolute;left:50%;top:calc(50% + 35px);transform:translateX(-50%);padding:5px 10px;border-radius:20px;background:#0a1b13a6;color:#f4fff5;font-size:10px;text-shadow:0 1px 2px #000;white-space:nowrap}
+#toast{position:absolute;top:82px;left:50%;transform:translateX(-50%);padding:9px 14px;border-radius:12px;font-size:12px;font-weight:750;display:none;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
+#menu,#inventory,#pause{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:18px;background:linear-gradient(135deg,rgba(5,17,12,.60),rgba(4,13,10,.78));overflow:auto}
+#menuCard{width:min(760px,100%);border-radius:24px;padding:clamp(20px,4vw,34px);display:grid;grid-template-columns:1.1fr .9fr;gap:25px;background:linear-gradient(145deg,rgba(25,48,34,.97),rgba(9,22,16,.97));border:1px solid #ffffff2a;box-shadow:0 24px 80px #0009}
+#hero{display:flex;flex-direction:column;justify-content:center;min-width:0}#logoMark{width:58px;height:58px;border-radius:16px;background:linear-gradient(135deg,#b8f28a,#4c963f);display:grid;place-items:center;font-size:29px;box-shadow:inset -7px -7px 0 #2d6d31,0 9px 22px #0005;margin-bottom:18px}
+h1{font-size:clamp(30px,5vw,48px);line-height:.98;letter-spacing:-1.8px;margin:0 0 10px;font-weight:1000;text-shadow:0 4px 16px #0006}h1 span{color:var(--mint)}
+.subtitle{color:#d0dfd2;font-size:14px;line-height:1.5;margin:0 0 20px;max-width:410px}
+.featureLine{display:flex;gap:8px;flex-wrap:wrap}.featurePill{border:1px solid #ffffff25;background:#ffffff0c;border-radius:20px;padding:6px 10px;color:#dce9dd;font-size:10px;font-weight:750}
+#modePanel{min-width:0;display:flex;flex-direction:column;justify-content:center}#modePanel h2{font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#b8cabb;margin:0 0 10px}
+.modeGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.modeCard{min-height:88px;text-align:left;padding:12px;border-radius:14px;background:linear-gradient(145deg,#34533d,#1a3224);display:flex;flex-direction:column;gap:5px}.modeCard strong{font-size:13px}.modeCard small{font-size:10px;color:#d0dfd2;line-height:1.3;font-weight:500}
+#menuExtra{display:flex;gap:8px;margin-top:12px}#menuExtra button{flex:1;font-size:12px}.secondary{background:linear-gradient(180deg,#47534b,#29352d)}
+#menuNote{margin-top:13px;color:#b7c8bb;font-size:10px;line-height:1.45}
+.modalCard{width:min(560px,100%);max-height:min(82vh,700px);overflow:auto;border-radius:20px;padding:20px;background:linear-gradient(145deg,rgba(25,46,34,.98),rgba(8,19,14,.98));border:1px solid #ffffff2a;box-shadow:0 24px 80px #0009}
+.modalHead{display:flex;align-items:center;justify-content:space-between;gap:10px}.modalHead h2{margin:0;font-size:22px}.modalHead button{padding:7px 11px}.modalSub{color:#c3d3c6;font-size:12px;margin:6px 0 14px}
+#inventoryGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.inventoryItem{min-height:82px;background:linear-gradient(145deg,#314b39,#1b2e22);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px}.inventoryItem .blockIcon{width:31px;height:31px}.inventoryItem strong{font-size:11px}.inventoryItem small{font-size:10px;color:#c6d5c8}
+#pause{display:none;z-index:9}#pauseCard{width:min(340px,100%);padding:22px;border-radius:20px;text-align:center}#pauseCard h2{margin:0 0 14px}#pauseCard .menurow{display:flex;gap:8px;margin-top:8px}#pauseCard button{flex:1}
+#fatal{display:none;position:fixed;inset:0;z-index:30;background:#17251d;color:white;padding:24px;overflow:auto}#fatal h1{font-size:28px}#fatal p{line-height:1.5;color:#d4e1d7}
+@media(max-width:760px){#menuCard{grid-template-columns:1fr;gap:20px;max-width:520px}#hero{align-items:center;text-align:center}#logoMark{margin-bottom:12px}.subtitle{margin-bottom:12px}.featureLine{justify-content:center}#stats{display:none}#actions{gap:4px}#actions button{padding:8px 9px;font-size:10px}#brand{font-size:10px;padding:8px 10px}#mobileControls{display:block}#hint{display:none}#hotbar{bottom:max(10px,env(safe-area-inset-bottom));gap:3px;padding:5px}.slot{width:42px;height:48px;flex-basis:42px}.blockIcon{width:20px;height:20px}.slotName{font-size:8px}#inventoryGrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:390px){#actions button{padding:7px 7px;font-size:9px}#brand{letter-spacing:.3px}.slot{width:38px;flex-basis:38px}.slotCount{font-size:9px}}
+@media(max-width:350px){.slot{width:33px;flex-basis:33px;height:44px}.blockIcon{width:17px;height:17px}.slotName{font-size:7px}#hotbar{gap:2px;padding:4px}}
+@media(hover:none),(pointer:coarse){#mobileControls{display:block}#hint{display:none}}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
+</script>
+</head>
+<body>
+<div id="world"></div><div id="vignette"></div>
+<div id="hud">
+  <div id="topbar">
+    <div id="brand" class="glass"><span class="brandCube"></span> BEDROCK WEB</div>
+    <div id="stats" class="glass"><span class="statGroup"><span class="heart">♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥</span></span><span class="statDivider"></span><span class="statGroup"><span class="food">● ● ● ● ● ● ● ● ● ●</span></span><span class="statDivider"></span><span id="coordinates">0, 0, 0</span></div>
+    <div id="actions"><button id="modeBtn">Survival</button><button id="inventoryBtn">Inventory</button><button id="saveBtn">Save</button><button id="pauseBtn" class="secondary">Menu</button></div>
+  </div>
+  <div id="crosshair"></div><div id="targetOutline">WASD move · Mouse look</div>
+  <div id="hotbar" class="glass" aria-label="Hotbar"></div>
+  <div id="mobileControls">
+    <div id="joystick"><div id="joyKnob"></div></div>
+    <div id="mobileActions"><button id="jumpBtn">JUMP</button><button id="breakBtn">BREAK</button><button id="placeBtn">PLACE</button><button id="mobileBagBtn">BAG</button></div>
+    <div id="lookLabel">DRAG RIGHT SIDE TO LOOK</div>
+  </div>
+  <div id="hint">WASD move · Space jump · Left click break · Right click place · 1–8 select · E inventory</div>
+  <div id="toast" class="glass"></div>
+</div>
+
+<div id="menu">
+  <div id="menuCard">
+    <section id="hero">
+      <div id="logoMark">▦</div>
+      <h1>BEDROCK <span>WEB</span></h1>
+      <p class="subtitle">Build, explore and make your own little block world. A free, original voxel sandbox that runs in your browser.</p>
+      <div class="featureLine"><span class="featurePill">✦ Procedural world</span><span class="featurePill">▦ 8 block types</span><span class="featurePill">⌁ Keyboard + touch</span></div>
+    </section>
+    <section id="modePanel">
+      <h2>Choose your game mode</h2>
+      <div class="modeGrid">
+        <button class="modeCard" data-mode="Survival"><strong>♥ Survival</strong><small>Explore, collect blocks and build with a limited supply.</small></button>
+        <button class="modeCard" data-mode="Creative"><strong>✦ Creative</strong><small>Fly freely and build with unlimited blocks.</small></button>
+        <button class="modeCard" data-mode="Adventure"><strong>⌖ Adventure</strong><small>Explore with normal movement; building is disabled.</small></button>
+        <button class="modeCard" data-mode="Spectator"><strong>◉ Spectator</strong><small>Fly through the world and look around without editing.</small></button>
+      </div>
+      <div id="menuExtra"><button id="loadBtn" class="secondary">Load saved world</button><button id="newWorldBtn">New world</button></div>
+      <div id="menuNote">Your save stays in this browser on this device. This is a single-player prototype; multiplayer is a later feature. An internet connection is needed to load the 3D engine.</div>
+    </section>
+  </div>
+</div>
+
+<div id="inventory" style="display:none">
+  <div class="modalCard">
+    <div class="modalHead"><h2>Inventory</h2><button id="closeInventory" class="secondary">Close ✕</button></div>
+    <p class="modalSub">Choose a block to put it in your selected hotbar slot.</p>
+    <div id="inventoryGrid"></div>
+  </div>
+</div>
+<div id="pause" style="display:none">
+  <div id="pauseCard" class="glass"><h2>Game paused</h2><div class="menurow"><button id="resumeBtn">Resume</button><button id="backMenuBtn" class="secondary">Main menu</button></div><div class="menurow"><button id="pauseSaveBtn" class="secondary">Save world</button></div></div>
+</div>
+<div id="fatal"><h1>Bedrock Web could not start</h1><p id="fatalMessage">Your browser could not create the 3D game.</p><p>Try reloading the page, closing other tabs, or using the latest Chrome browser with hardware acceleration enabled.</p></div>
+
+<script type="module">
+import * as THREE from "three";
+
+const $ = id => document.getElementById(id);
+const worldEl = $("world");
+const fatal = $("fatal");
+let renderer, scene, camera, sun;
+try {
+  renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:"high-performance", alpha:false});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
+  renderer.shadowMap.enabled = false;
+  worldEl.appendChild(renderer.domElement);
+} catch (err) {
+  fatal.style.display = "block";
+  $("fatalMessage").textContent = "WebGL is unavailable in this browser or device. " + (err && err.message ? err.message : "");
+  throw err;
+}
+
+scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xb6d9e8, 42, 115);
+camera = new THREE.PerspectiveCamera(72, innerWidth / innerHeight, 0.1, 220);
+
+// Procedural sky dome: no downloaded textures or game assets are used.
+const skyGeo = new THREE.SphereGeometry(190, 24, 16);
+const skyMat = new THREE.ShaderMaterial({
+  side:THREE.BackSide,
+  uniforms:{topColor:{value:new THREE.Color(0x398acb)},horizonColor:{value:new THREE.Color(0xc7e8ed)}},
+  vertexShader:`varying vec3 vWorld; void main(){vec4 w=modelMatrix*vec4(position,1.0);vWorld=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}`,
+  fragmentShader:`uniform vec3 topColor;uniform vec3 horizonColor;varying vec3 vWorld;void main(){float h=normalize(vWorld).y;float t=smoothstep(-0.12,0.72,h);gl_FragColor=vec4(mix(horizonColor,topColor,t),1.0);}`
+});
+scene.add(new THREE.Mesh(skyGeo,skyMat));
+scene.add(new THREE.HemisphereLight(0xe3f6ff,0x66764e,1.65));
+sun = new THREE.DirectionalLight(0xfff3d7,2.0);sun.position.set(-28,42,24);scene.add(sun);
+const sunBall = new THREE.Mesh(new THREE.SphereGeometry(3.2,16,12),new THREE.MeshBasicMaterial({color:0xfff2bf}));sunBall.position.set(-68,55,-90);scene.add(sunBall);
+
+function seeded(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
+function canvasTexture(kind, seed=1){
+  const c=document.createElement("canvas");c.width=c.height=32;const ctx=c.getContext("2d");const r=seeded(seed+kind.length*97);
+  const base={grassTop:[91,157,57],grassSide:[119,91,53],dirt:[129,88,56],stone:[119,127,130],wood:[129,83,43],woodTop:[167,119,68],leaves:[55,119,55],sand:[210,190,125],planks:[164,117,70],brick:[143,79,61]}[kind]||[120,120,120];
+  ctx.clearRect(0,0,32,32);ctx.fillStyle=`rgb(${base.join(",")})`;ctx.fillRect(0,0,32,32);
+  if(kind==="grassSide"){ctx.fillStyle="#5f9f3c";ctx.fillRect(0,0,32,7);ctx.fillStyle="#79b94a";for(let x=0;x<32;x+=4)ctx.fillRect(x,6,2,3);}
+  if(kind==="woodTop"){ctx.strokeStyle="#80522e";ctx.lineWidth=1.4;for(let i=0;i<4;i++){ctx.beginPath();ctx.ellipse(16,16,4+i*3,4+i*3,0,0,Math.PI*2);ctx.stroke();}}
+  if(kind==="planks"){ctx.strokeStyle="#80552f";ctx.lineWidth=1;for(let y=7;y<32;y+=9){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(32,y);ctx.stroke();}ctx.fillStyle="#68472d";ctx.fillRect(8,3,2,2);ctx.fillRect(24,18,2,2);}
+  if(kind==="brick"){ctx.strokeStyle="#744237";ctx.lineWidth=1.3;for(let y=0;y<32;y+=8){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(32,y);ctx.stroke();ctx.beginPath();ctx.moveTo((y/8%2)*8,y);ctx.lineTo((y/8%2)*8,y+8);ctx.moveTo(16+(y/8%2)*8,y);ctx.lineTo(16+(y/8%2)*8,y+8);ctx.stroke();}}
+  for(let i=0;i<170;i++){
+    const x=Math.floor(r()*32),y=Math.floor(r()*32),a=.08+r()*.18;
+    if(kind==="leaves"&&r()<.16)continue;
+    const delta=r()<.5?-1:1;ctx.fillStyle=`rgba(${delta<0?0:255},${delta<0?0:255},${delta<0?0:255},${a})`;ctx.fillRect(x,y,1+(r()<.12?1:0),1+(r()<.12?1:0));
+  }
+  if(kind==="leaves"){ctx.globalCompositeOperation="destination-out";for(let i=0;i<48;i++){if(r()<.52)ctx.fillRect(Math.floor(r()*32),Math.floor(r()*32),1,1);}ctx.globalCompositeOperation="source-over";}
+  const tex=new THREE.CanvasTexture(c);tex.magFilter=THREE.NearestFilter;tex.minFilter=THREE.NearestMipmapNearestFilter;tex.colorSpace=THREE.SRGBColorSpace;return tex;
+}
+const tex={grassTop:canvasTexture("grassTop",1),grassSide:canvasTexture("grassSide",2),dirt:canvasTexture("dirt",3),stone:canvasTexture("stone",4),wood:canvasTexture("wood",5),woodTop:canvasTexture("woodTop",6),leaves:canvasTexture("leaves",7),sand:canvasTexture("sand",8),planks:canvasTexture("planks",9),brick:canvasTexture("brick",10)};
+const mat=(map,extra={})=>new THREE.MeshLambertMaterial({map,...extra});
+const materials={
+  grass:[mat(tex.grassSide),mat(tex.grassSide),mat(tex.grassTop),mat(tex.dirt),mat(tex.grassSide),mat(tex.grassSide)],
+  dirt:mat(tex.dirt),stone:mat(tex.stone),wood:[mat(tex.wood),mat(tex.wood),mat(tex.woodTop),mat(tex.woodTop),mat(tex.wood),mat(tex.wood)],
+  leaves:mat(tex.leaves,{transparent:true,alphaTest:.28}),sand:mat(tex.sand),planks:mat(tex.planks),brick:mat(tex.brick),bedrock:mat(tex.stone)
+};
+const blockTypes=["grass","dirt","stone","wood","leaves","sand","planks","brick"];
+const blockLabels={grass:"Grass",dirt:"Dirt",stone:"Stone",wood:"Log",leaves:"Leaves",sand:"Sand",planks:"Planks",brick:"Brick"};
+const swatches={grass:"linear-gradient(135deg,#80c04e 0 34%,#8a633d 35% 100%)",dirt:"#875a38",stone:"#8a9294",wood:"linear-gradient(90deg,#704426,#b47b46)",leaves:"#3d883d",sand:"#d8c487",planks:"repeating-linear-gradient(0deg,#9c7047 0 5px,#684b32 6px 7px)",brick:"repeating-linear-gradient(0deg,#a35f4e 0 6px,#70433a 7px 8px)"};
+const cubeGeo=new THREE.BoxGeometry(1,1,1);
+const blocks=new Map();let instanceMeshes=[];let worldSeed=20261108;
+const key=(x,y,z)=>`${x},${y},${z}`;
+const parseKey=k=>k.split(",").map(Number);
+function addBlock(x,y,z,type,refresh=false){const k=key(x,y,z);if(blocks.has(k))return false;blocks.set(k,type);if(refresh)rebuildMeshes();return true;}
+function removeBlock(x,y,z,refresh=false){const k=key(x,y,z);if(!blocks.has(k))return false;blocks.delete(k);if(refresh)rebuildMeshes();return true;}
+function rebuildMeshes(){
+  for(const m of instanceMeshes)scene.remove(m);instanceMeshes=[];
+  const groups=new Map(blockTypes.concat(["bedrock"]).map(t=>[t,[]]));
+  for(const [k,type] of blocks){if(!groups.has(type))groups.set(type,[]);groups.get(type).push(k);}
+  const dummy=new THREE.Object3D();
+  for(const [type,keys] of groups){if(!keys.length)continue;const mesh=new THREE.InstancedMesh(cubeGeo,materials[type]||materials.stone,keys.length);mesh.userData.blockKeys=keys;mesh.castShadow=false;mesh.receiveShadow=false;
+    keys.forEach((k,i)=>{const [x,y,z]=parseKey(k);dummy.position.set(x,y,z);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);});mesh.instanceMatrix.needsUpdate=true;scene.add(mesh);instanceMeshes.push(mesh);
+  }
+}
+function smooth(t){return t*t*(3-2*t);}
+function valueNoise(x,z,seed){const x0=Math.floor(x),z0=Math.floor(z),fx=smooth(x-x0),fz=smooth(z-z0);const h=(a,b)=>{const n=Math.sin(a*127.1+b*311.7+seed*.017)*43758.5453;return(n-Math.floor(n))*2-1;};const a=h(x0,z0),b=h(x0+1,z0),c=h(x0,z0+1),d=h(x0+1,z0+1);return(a+(b-a)*fx)+((c+(d-c)*fx)-(a+(b-a)*fx))*fz;}
+function terrainHeight(x,z){const n=valueNoise(x*.085,z*.085,worldSeed)*2.3+valueNoise(x*.19,z*.19,worldSeed+9)*.75+Math.sin((x+z)*.11)*.35;return Math.max(1,Math.min(8,Math.round(3.5+n)));}
+function makeTree(x,y,z,rng){
+  const trunk=4+(rng()<.35?1:0);for(let i=1;i<=trunk;i++)addBlock(x,y+i,z,"wood");
+  for(let layer=0;layer<4;layer++){const yy=y+trunk-1+layer;const radius=layer===3?1:layer===0?2:2-layer*.15;for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++){if(Math.abs(dx)+Math.abs(dz)>4-layer*.55)continue;if(dx===0&&dz===0&&layer<2)continue;if(rng()>.07)addBlock(x+dx,yy,z+dz,"leaves");}}
+}
+function spawnPosition(){const x=0,z=8;return new THREE.Vector3(x,terrainHeight(x,z)+.52,z);}
+function generateWorld(seed){
+  worldSeed=seed;blocks.clear();const rng=seeded(seed);const half=21;
+  for(let x=-half;x<=half;x++)for(let z=-half;z<=half;z++){
+    const h=terrainHeight(x,z);
+    for(let y=-2;y<=h;y++){
+      const type=y===-2?"bedrock":y===h?"grass":y>=h-2?"dirt":"stone";addBlock(x,y,z,type);
+    }
+  }
+  // Scattered trees leave a wide, flat spawn clearing.
+  for(let x=-half+2;x<=half-2;x++)for(let z=-half+2;z<=half-2;z++){
+    if(Math.hypot(x,z-8)<6)continue;
+    const roll=rng();if(roll>.962&&terrainHeight(x,z)>=2)makeTree(x,terrainHeight(x,z),z,rng);
+  }
+  // A small grove beyond the clearing creates a visible landmark.
+  [[-10,2],[-12,8],[-9,13],[10,1],[12,8],[9,14],[2,-11],[-4,-13]].forEach(([x,z])=>{if(Math.hypot(x,z-8)>5)makeTree(x,terrainHeight(x,z),z,rng);});
+  rebuildMeshes();
+}
+
+const player={pos:new THREE.Vector3(0,4,8),velocity:new THREE.Vector3(),yaw:0,pitch:-.12,onGround:false};
+const raycaster=new THREE.Raycaster();raycaster.far=6.5;
+const centerNdc=new THREE.Vector2(0,0);
+const outline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.015,1.015,1.015)),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.9}));outline.visible=false;scene.add(outline);
+let mode="Survival",started=false,selected=0,inventory={grass:32,dirt:24,stone:24,wood:12,leaves:16,sand:12,planks:16,brick:12};
+let keys={},touchMove={x:0,y:0},pointerLocked=false,lookPointer=null,lastLook=null,joyPointer=null,jumpHeld=false,lastFrame=performance.now(),targetHit=null;
+let health=20,hunger=20;
+function toast(message){const el=$("toast");el.textContent=message;el.style.display="block";clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.display="none",1900);}
+function updateStatus(){const x=Math.floor(player.pos.x),y=Math.floor(player.pos.y),z=Math.floor(player.pos.z);$("coordinates").textContent=`${x}, ${y}, ${z}`;$("modeBtn").textContent=mode;}
+function drawHotbar(){const bar=$("hotbar");bar.innerHTML="";blockTypes.forEach((type,i)=>{const b=document.createElement("button");b.className="slot"+(i===selected?" selected":"");b.title=blockLabels[type];b.setAttribute("aria-label",`${blockLabels[type]}, ${inventory[type]||0}`);b.innerHTML=`<span class="slotCount">${mode==="Creative"?"∞":(inventory[type]||0)}</span><span class="blockIcon" style="background:${swatches[type]}"></span><span class="slotName">${blockLabels[type]}</span>`;b.addEventListener("click",()=>{selected=i;drawHotbar();});bar.appendChild(b);});}
+function setMode(next){mode=next;player.velocity.set(0,0,0);drawHotbar();updateStatus();toast(`${mode} mode`);}
+function saveWorld(){try{const data={version:2,seed:worldSeed,blocks:[...blocks.entries()],pos:player.pos.toArray(),yaw:player.yaw,pitch:player.pitch,mode,inventory};localStorage.setItem("bedrockWebWorldV2",JSON.stringify(data));toast("World saved on this device");}catch(e){toast("Save failed: browser storage is full or unavailable");}}
+function loadWorld(){try{const raw=localStorage.getItem("bedrockWebWorldV2")||localStorage.getItem("bedrockWebWorld");if(!raw){toast("No saved world found on this device");return false;}const data=JSON.parse(raw);if(!Array.isArray(data.blocks))throw new Error("Save file is not valid");blocks.clear();for(const [k,t] of data.blocks){if(typeof k==="string"&&typeof t==="string")blocks.set(k,t);}rebuildMeshes();if(Array.isArray(data.pos)&&data.pos.length===3){const savedPos=[...data.pos];if(data.version!==2)savedPos[1]-=1.62;player.pos.fromArray(savedPos);}if(typeof data.yaw==="number")player.yaw=data.yaw;if(typeof data.pitch==="number")player.pitch=data.pitch;if(data.inventory&&typeof data.inventory==="object")inventory={...inventory,...data.inventory};if(data.mode&&["Survival","Creative","Adventure","Spectator"].includes(data.mode))mode=data.mode;worldSeed=data.seed||worldSeed;drawHotbar();updateStatus();toast("Saved world loaded");return true;}catch(e){toast("Could not load that saved world");return false;}}
+function showMenu(){started=false;$("menu").style.display="flex";$("pause").style.display="none";$("hud").style.display="none";document.exitPointerLock?.();}
+function startGame(nextMode=mode){setMode(nextMode);started=true;$("menu").style.display="none";$("pause").style.display="none";$("hud").style.display="block";if(matchMedia("(pointer:fine)").matches)renderer.domElement.requestPointerLock?.();}
+function newWorld(){generateWorld(Math.floor(Math.random()*1e9));player.pos.copy(spawnPosition());player.velocity.set(0,0,0);player.yaw=0;player.pitch=-.12;player.onGround=false;inventory={grass:32,dirt:24,stone:24,wood:12,leaves:16,sand:12,planks:16,brick:12};health=20;hunger=20;drawHotbar();toast("A new world is ready");}
+
+for(const btn of document.querySelectorAll("[data-mode]"))btn.addEventListener("click",()=>startGame(btn.dataset.mode));
+$("newWorldBtn").addEventListener("click",()=>{newWorld();startGame("Survival");});
+$("loadBtn").addEventListener("click",()=>{if(loadWorld())startGame(mode);});
+$("saveBtn").addEventListener("click",saveWorld);$("pauseSaveBtn").addEventListener("click",saveWorld);
+$("modeBtn").addEventListener("click",()=>{const modes=["Survival","Creative","Adventure","Spectator"];setMode(modes[(modes.indexOf(mode)+1)%modes.length]);});
+$("inventoryBtn").addEventListener("click",openInventory);$("mobileBagBtn").addEventListener("click",openInventory);$("closeInventory").addEventListener("click",closeInventory);
+$("pauseBtn").addEventListener("click",()=>{$("pause").style.display="flex";document.exitPointerLock?.();});
+$("resumeBtn").addEventListener("click",()=>{$("pause").style.display="none";if(matchMedia("(pointer:fine)").matches)renderer.domElement.requestPointerLock?.();});
+$("backMenuBtn").addEventListener("click",showMenu);
+function openInventory(){if(!started)return;document.exitPointerLock?.();const grid=$("inventoryGrid");grid.innerHTML="";blockTypes.forEach((type,i)=>{const b=document.createElement("button");b.className="inventoryItem";b.innerHTML=`<span class="blockIcon" style="background:${swatches[type]}"></span><strong>${blockLabels[type]}</strong><small>${mode==="Creative"?"Unlimited":(inventory[type]||0)+" available"}</small>`;b.addEventListener("click",()=>{selected=i;drawHotbar();closeInventory();});grid.appendChild(b);});$("inventory").style.display="flex";}
+function closeInventory(){$("inventory").style.display="none";if(started&&matchMedia("(pointer:fine)").matches)renderer.domElement.requestPointerLock?.();}
+
+function blockAtCell(x,y,z){return blocks.has(key(x,y,z));}
+function cell(v){return Math.floor(v+.5);}
+function bodyCollides(x,feet,z){const r=.29;const minX=cell(x-r),maxX=cell(x+r),minZ=cell(z-r),maxZ=cell(z+r),minY=cell(feet+.08),maxY=cell(feet+1.72);for(let ix=minX;ix<=maxX;ix++)for(let iz=minZ;iz<=maxZ;iz++)for(let iy=minY;iy<=maxY;iy++)if(blockAtCell(ix,iy,iz))return true;return false;}
+function groundUnder(x,z,feet){const r=.27;const xs=[x-r,x+r,x],zs=[z-r,z+r,z];let highest=-Infinity;for(const px of xs)for(const pz of zs){const ix=cell(px),iz=cell(pz);for(let y=Math.floor(feet+.25);y>=-3;y--){if(blockAtCell(ix,y,iz)){const top=y+.5;if(top<=feet+.22){highest=Math.max(highest,top);break;}}}}return highest===-Infinity?null:highest;}
+function targetBlock(){camera.updateMatrixWorld();raycaster.setFromCamera(centerNdc,camera);const hits=raycaster.intersectObjects(instanceMeshes,false);if(!hits.length)return null;const hit=hits[0],k=hit.object.userData.blockKeys[hit.instanceId];if(!k)return null;return{hit,key:k,pos:parseKey(k)};}
+function updateTarget(){targetHit=targetBlock();if(targetHit){outline.position.set(...targetHit.pos);outline.visible=true;}else outline.visible=false;}
+function breakBlock(){if(!started||$("inventory").style.display==="flex")return;if(mode==="Adventure"||mode==="Spectator"){toast(`${mode} mode does not allow breaking`);return;}const target=targetBlock();if(!target)return;const [x,y,z]=target.pos;if(y<=-2)return;const type=blocks.get(target.key);removeBlock(x,y,z);if(mode==="Survival")inventory[type]=(inventory[type]||0)+1;rebuildMeshes();drawHotbar();updateTarget();}
+function placeBlock(){if(!started||$("inventory").style.display==="flex")return;if(mode==="Adventure"||mode==="Spectator"){toast(`${mode} mode does not allow placing`);return;}const target=targetBlock();if(!target||!target.hit.face)return;const normal=target.hit.face.normal;const [bx,by,bz]=target.pos;const x=bx+Math.round(normal.x),y=by+Math.round(normal.y),z=bz+Math.round(normal.z),type=blockTypes[selected];if(blocks.has(key(x,y,z)))return;if(mode==="Survival"&&(inventory[type]||0)<1){toast(`No ${blockLabels[type].toLowerCase()} left`);return;}if(Math.abs(x-player.pos.x)<.78&&Math.abs(z-player.pos.z)<.78&&y+.5>player.pos.y+.05&&y-.5<player.pos.y+1.72){toast("You cannot place a block inside yourself");return;}addBlock(x,y,z,type);if(mode==="Survival")inventory[type]--;rebuildMeshes();drawHotbar();updateTarget();}
+
+const canvas=renderer.domElement;
+canvas.addEventListener("contextmenu",e=>e.preventDefault());
+canvas.addEventListener("click",()=>{if(started&&!matchMedia("(pointer:coarse)").matches&&document.pointerLockElement!==canvas)canvas.requestPointerLock?.();});
+document.addEventListener("pointerlockchange",()=>{pointerLocked=document.pointerLockElement===canvas;});
+document.addEventListener("mousemove",e=>{if(pointerLocked&&started){player.yaw-=e.movementX*.0024;player.pitch-=e.movementY*.0024;player.pitch=Math.max(-1.48,Math.min(1.48,player.pitch));}});
+canvas.addEventListener("mousedown",e=>{if(!started||$("inventory").style.display==="flex"||$("pause").style.display==="flex")return;if(e.button===0)breakBlock();if(e.button===2)placeBlock();});
+document.addEventListener("keydown",e=>{if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code)&&started)e.preventDefault();keys[e.code]=true;if(!started)return;if(e.code==="Escape"){if($("inventory").style.display==="flex")closeInventory();else $("pause").style.display="flex";}if(e.code==="KeyE")openInventory();if(e.code.startsWith("Digit")){const n=Number(e.code.slice(5))-1;if(n>=0&&n<blockTypes.length){selected=n;drawHotbar();}}if(e.code==="Space"&&(mode==="Survival"||mode==="Adventure")&&player.onGround){player.velocity.y=8.1;player.onGround=false;}});
+document.addEventListener("keyup",e=>{keys[e.code]=false;});
+
+// Mobile joystick and right-side drag look use Pointer Events for Android/iOS browsers.
+const joy=$("joystick"),knob=$("joyKnob");
+function updateJoystick(e){const r=joy.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy;const len=Math.hypot(dx,dy),max=43;if(len>max){dx=dx/len*max;dy=dy/len*max;}touchMove={x:dx/max,y:dy/max};knob.style.transform=`translate(${dx}px,${dy}px)`;}
+joy.addEventListener("pointerdown",e=>{joyPointer=e.pointerId;joy.setPointerCapture(e.pointerId);updateJoystick(e);e.preventDefault();});
+joy.addEventListener("pointermove",e=>{if(e.pointerId===joyPointer)updateJoystick(e);});
+function endJoy(e){if(e.pointerId===joyPointer){joyPointer=null;touchMove={x:0,y:0};knob.style.transform="translate(0,0)";}}
+joy.addEventListener("pointerup",endJoy);joy.addEventListener("pointercancel",endJoy);
+canvas.addEventListener("pointerdown",e=>{if(e.pointerType==="touch"&&e.clientX>innerWidth*.38&&started){lookPointer=e.pointerId;lastLook={x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);}});
+canvas.addEventListener("pointermove",e=>{if(e.pointerId===lookPointer&&lastLook){player.yaw-=(e.clientX-lastLook.x)*.006;player.pitch-=(e.clientY-lastLook.y)*.006;player.pitch=Math.max(-1.45,Math.min(1.45,player.pitch));lastLook={x:e.clientX,y:e.clientY};}});
+function endLook(e){if(e.pointerId===lookPointer){lookPointer=null;lastLook=null;}}
+canvas.addEventListener("pointerup",endLook);canvas.addEventListener("pointercancel",endLook);
+$("breakBtn").addEventListener("click",breakBlock);$("placeBtn").addEventListener("click",placeBlock);
+$("jumpBtn").addEventListener("pointerdown",e=>{jumpHeld=true;$("jumpBtn").setPointerCapture(e.pointerId);if((mode==="Survival"||mode==="Adventure")&&player.onGround){player.velocity.y=8.1;player.onGround=false;}});
+function endJump(){jumpHeld=false;}$("jumpBtn").addEventListener("pointerup",endJump);$("jumpBtn").addEventListener("pointercancel",endJump);
+
+function movePlayer(dt){
+  const forward=new THREE.Vector3(-Math.sin(player.yaw),0,-Math.cos(player.yaw));
+  const right=new THREE.Vector3(Math.cos(player.yaw),0,-Math.sin(player.yaw));
+  const move=new THREE.Vector3();
+  if(keys.KeyW||keys.ArrowUp)move.add(forward);if(keys.KeyS||keys.ArrowDown)move.sub(forward);if(keys.KeyD||keys.ArrowRight)move.add(right);if(keys.KeyA||keys.ArrowLeft)move.sub(right);
+  move.addScaledVector(forward,-touchMove.y);move.addScaledVector(right,touchMove.x);if(move.lengthSq()>1)move.normalize();
+  const fast=keys.ShiftLeft||keys.ShiftRight;const speed=fast?7.2:4.7;
+  if(mode==="Creative"||mode==="Spectator"){
+    player.pos.x+=move.x*speed*dt;player.pos.z+=move.z*speed*dt;
+    const vertical=(keys.Space||jumpHeld?1:0)-(keys.ShiftLeft||keys.ShiftRight?1:0);player.pos.y+=vertical*(mode==="Spectator"?9:7)*dt;player.velocity.y=0;player.onGround=false;
+  }else{
+    const oldX=player.pos.x,oldZ=player.pos.z;
+    const tryHorizontal=(axis,value)=>{
+      const testX=axis==="x"?value:player.pos.x,testZ=axis==="z"?value:player.pos.z;
+      if(!bodyCollides(testX,player.pos.y,testZ)){if(axis==="x")player.pos.x=value;else player.pos.z=value;return;}
+      // Allow a simple one-block step, like walking up a low voxel ledge.
+      if(player.onGround){const stepTop=groundUnder(testX,testZ,player.pos.y+1.12);if(stepTop!==null&&stepTop>player.pos.y+.05&&stepTop<=player.pos.y+1.01&&!bodyCollides(testX,stepTop,testZ)){if(axis==="x")player.pos.x=value;else player.pos.z=value;player.pos.y=stepTop;player.velocity.y=0;}}
+    };
+    tryHorizontal("x",oldX+move.x*speed*dt);
+    tryHorizontal("z",oldZ+move.z*speed*dt);
+    player.velocity.y-=22*dt;const oldFeet=player.pos.y;let nextFeet=oldFeet+player.velocity.y*dt;const ground=groundUnder(player.pos.x,player.pos.z,oldFeet);
+    if(player.velocity.y<=0&&ground!==null&&nextFeet<=ground&&oldFeet>=ground-.25){nextFeet=ground;player.velocity.y=0;player.onGround=true;}else{player.onGround=false;if(bodyCollides(player.pos.x,nextFeet,player.pos.z)){if(player.velocity.y>0){player.velocity.y=0;nextFeet=oldFeet;}else{const safeGround=groundUnder(player.pos.x,player.pos.z,oldFeet+.2);if(safeGround!==null){nextFeet=safeGround;player.velocity.y=0;player.onGround=true;}else nextFeet=oldFeet;}}}
+    player.pos.y=nextFeet;
+    if(player.pos.y < -8){player.pos.copy(spawnPosition());player.velocity.set(0,0,0);toast("You returned to the spawn area");}
+  }
+  // Keep the world walkable and avoid an accidental fall forever at its edge.
+  player.pos.x=THREE.MathUtils.clamp(player.pos.x,-23,23);player.pos.z=THREE.MathUtils.clamp(player.pos.z,-23,23);
+}
+
+// Decorative low-poly cloud clusters.
+const cloudMat=new THREE.MeshLambertMaterial({color:0xffffff,transparent:true,opacity:.72});
+function cloud(x,y,z,s){for(const [dx,dy,dz,k] of [[0,0,0,1.5],[1.5,.2,0,1.2],[-1.3,.1,.1,1.1],[.3,.55,0,1]]){const m=new THREE.Mesh(new THREE.BoxGeometry(k*s,.55*s,.8*s),cloudMat);m.position.set(x+dx*s,y+dy*s,z+dz*s);scene.add(m);}}
+cloud(-15,15,-18,1.5);cloud(12,18,-25,1.8);cloud(28,14,4,1.3);cloud(-28,17,10,1.4);
+
+function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));renderer.setSize(innerWidth,innerHeight);}
+addEventListener("resize",resize);
+function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-lastFrame)/1000,.04);lastFrame=now;if(started&&$("inventory").style.display!=="flex"&&$("pause").style.display!=="flex")movePlayer(dt);camera.position.set(player.pos.x,player.pos.y+1.62,player.pos.z);camera.rotation.order="YXZ";camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;updateStatus();if(started&&now-lastTargetUpdate>120){updateTarget();lastTargetUpdate=now;}renderer.render(scene,camera);}
+let lastTargetUpdate=0;
+
+// Start with a generated world and a safe, level spawn clearing.
+generateWorld(worldSeed);player.pos.copy(spawnPosition());drawHotbar();updateStatus();requestAnimationFrame(frame);
+</script>
+</body>
+</html>
