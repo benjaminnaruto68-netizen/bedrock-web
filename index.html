@@ -553,6 +553,43 @@ const rightLegPivot=new THREE.Group();rightLegPivot.position.set(.16,.73,0);play
 const rightLeg=new THREE.Mesh(new THREE.BoxGeometry(.25,.70,.27),pantsMat);rightLeg.position.y=-.35;rightLegPivot.add(rightLeg);
 const leftShoe=new THREE.Mesh(new THREE.BoxGeometry(.27,.16,.32),shoeMat);leftShoe.position.set(0,-.65,-.025);leftLegPivot.add(leftShoe);
 const rightShoe=new THREE.Mesh(new THREE.BoxGeometry(.27,.16,.32),shoeMat);rightShoe.position.set(0,-.65,-.025);rightLegPivot.add(rightShoe);
+
+const avatarSkinParts=[
+ {mesh:avatarHead,faces:[[0,8,8,8],[16,8,8,8],[8,0,8,8],[16,0,8,8],[8,8,8,8],[24,8,8,8]]},
+ {mesh:avatarTorso,faces:[[16,20,4,12],[28,20,4,12],[20,16,8,4],[28,16,8,4],[20,20,8,12],[32,20,8,12]]},
+ {mesh:leftArm,faces:[[40,20,4,12],[48,20,4,12],[44,16,4,4],[48,16,4,4],[44,20,4,12],[52,20,4,12]]},
+ {mesh:rightArm,faces:[[40,20,4,12],[48,20,4,12],[44,16,4,4],[48,16,4,4],[44,20,4,12],[52,20,4,12]]},
+ {mesh:leftLeg,faces:[[0,20,4,12],[8,20,4,12],[4,16,4,4],[8,16,4,4],[4,20,4,12],[12,20,4,12]]},
+ {mesh:rightLeg,faces:[[0,20,4,12],[8,20,4,12],[4,16,4,4],[8,16,4,4],[4,20,4,12],[12,20,4,12]]}
+];
+let activeSkinTexture=null;
+function makeSkinAtlas(source,faces){
+ const canvas=document.createElement("canvas");canvas.width=192;canvas.height=128;
+ const ctx=canvas.getContext("2d");ctx.imageSmoothingEnabled=false;
+ faces.forEach((r,i)=>{const x=(i%3)*64,y=Math.floor(i/3)*64;ctx.drawImage(source,r[0],r[1],r[2],r[3],x,y,64,64);});
+ const tex=new THREE.CanvasTexture(canvas);tex.magFilter=THREE.NearestFilter;tex.minFilter=THREE.NearestFilter;tex.colorSpace=THREE.SRGBColorSpace;
+ return tex;
+}
+function applySkinToAvatar(data){
+ const image=new Image();
+ image.onload=()=>{
+  if(image.width!==64||image.height!==64){toast("The live player model currently needs a 64 × 64 skin PNG.");return;}
+  avatarSkinParts.forEach(({mesh,faces})=>{
+   const texture=makeSkinAtlas(image,faces),geometry=mesh.geometry.clone(),uv=geometry.attributes.uv;
+   for(let face=0;face<6;face++){
+    const tileX=(face%3)/3,tileY=1-(Math.floor(face/3)+1)/2;
+    const corners=[[0,0],[1,0],[1,1],[0,1]];
+    for(let j=0;j<4;j++){const vertex=face*4+j;uv.setXY(vertex,tileX+corners[j][0]/3,tileY+corners[j][1]/2);}
+   }
+   uv.needsUpdate=true;mesh.geometry.dispose();mesh.geometry=geometry;
+   const old=mesh.material;mesh.material=new THREE.MeshLambertMaterial({map:texture,transparent:true});if(old&&old!==skinMat&&old!==shirtMat&&old!==pantsMat)old.dispose();
+  });
+  activeSkinTexture=data;
+ };
+ image.onerror=()=>toast("Could not load that skin texture");image.src=data;
+}
+function restoreAvatarSkin(){const saved=localStorage.getItem("bedrockWebSkinPNG");if(saved)applySkinToAvatar(saved);}
+
 let walkClock=0,walkBlend=0,movingNow=false;
 playerModel.visible=false;scene.add(playerModel);
 function updateCameraButton(){
@@ -607,8 +644,8 @@ function showSavedSkin(){const data=localStorage.getItem("bedrockWebSkinPNG");if
 $("dressingHomeBtn").addEventListener("click",()=>{$("skinRoom").style.display="flex";showSavedSkin();});
 $("closeSkinRoom").addEventListener("click",()=>{$("skinRoom").style.display="none";});
 $("chooseSkinBtn").addEventListener("click",()=>$("skinFile").click());
-$("skinFile").addEventListener("change",e=>{const file=e.target.files&&e.target.files[0];if(!file)return;if(file.type!=="image/png"){toast("Please choose a PNG skin file");return;}if(file.size>2*1024*1024){toast("Skin PNG must be smaller than 2 MB");return;}const reader=new FileReader();reader.onload=()=>{const data=reader.result;const img=new Image();img.onload=()=>{if(img.width!==64||(img.height!==64&&img.height!==32)){toast("Use a 64×64 or 64×32 PNG skin");return;}try{localStorage.setItem("bedrockWebSkinPNG",data);showSavedSkin();toast("Skin texture saved on this device");}catch(err){toast("Could not save skin: browser storage is full");}};img.onerror=()=>toast("That PNG could not be opened");img.src=data;};reader.onerror=()=>toast("Could not read that file");reader.readAsDataURL(file);});
-$("removeSkinBtn").addEventListener("click",()=>{localStorage.removeItem("bedrockWebSkinPNG");$("skinFile").value="";showSavedSkin();toast("Custom skin removed");});
+$("skinFile").addEventListener("change",e=>{const file=e.target.files&&e.target.files[0];if(!file)return;if(file.type!=="image/png"){toast("Please choose a PNG skin file");return;}if(file.size>2*1024*1024){toast("Skin PNG must be smaller than 2 MB");return;}const reader=new FileReader();reader.onload=()=>{const data=reader.result;const img=new Image();img.onload=()=>{if(img.width!==64||img.height!==64){toast("For live 3D skin mapping, choose a standard 64×64 PNG.");return;}try{localStorage.setItem("bedrockWebSkinPNG",data);showSavedSkin();applySkinToAvatar(data);toast("Skin applied to the 3D character and saved on this device");}catch(err){toast("Could not save skin: browser storage is full");}};img.onerror=()=>toast("That PNG could not be opened");img.src=data;};reader.onerror=()=>toast("Could not read that file");reader.readAsDataURL(file);});
+$("removeSkinBtn").addEventListener("click",()=>{localStorage.removeItem("bedrockWebSkinPNG");$("skinFile").value="";showSavedSkin();location.reload();});
 $("dressingHomeBtn").addEventListener("click",()=>toast("Character customization is coming in a future update."));
 for(const btn of document.querySelectorAll("[data-mode]"))btn.addEventListener("click",()=>startGame(btn.dataset.mode));
 // World creation now uses the Create New World panel in the Play screen.
@@ -746,7 +783,7 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-lastFram
 let lastTargetUpdate=0;
 
 // Start with a generated world and a safe, level spawn clearing.
-generateWorld(worldSeed);player.pos.copy(spawnPosition());drawHotbar();updateStatus();requestAnimationFrame(frame);
+generateWorld(worldSeed);player.pos.copy(spawnPosition());restoreAvatarSkin();drawHotbar();updateStatus();requestAnimationFrame(frame);
 </script>
 </body>
 </html>
