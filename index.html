@@ -84,6 +84,41 @@ h1{font-size:clamp(30px,5vw,48px);line-height:.98;letter-spacing:-1.8px;margin:0
 #inventoryHint{font-size:10px;color:#b8c9bb;line-height:1.4;margin-top:10px}
 @media(max-width:700px){#inventoryLayout{grid-template-columns:1fr 1fr}#inventoryLayout .bagPanel{grid-column:1/-1}#characterPreview{height:150px}#avatar{transform:scale(.78)}#bagGrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:390px){#inventoryLayout{grid-template-columns:1fr}#inventoryLayout .bagPanel{grid-column:auto}#bagGrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+/* Bedrock-inspired main title screen */
+#menu{padding:0;background:linear-gradient(#0002,#0008)}
+#menuCard{position:relative;width:100%;height:100%;max-width:none;border:0;border-radius:0;padding:0;display:block;overflow:hidden;background:linear-gradient(#0001,#0005);box-shadow:none}
+#hero{position:absolute;top:10%;left:50%;transform:translateX(-50%);width:95%;align-items:center;text-align:center;z-index:2;pointer-events:none}
+#logoMark,.subtitle,.featureLine{display:none!important}
+#hero h1{font-family:Impact,"Arial Black",system-ui;font-size:clamp(48px,8vw,100px);letter-spacing:1px;color:#eee;-webkit-text-stroke:2px #333;text-shadow:4px 5px #555,7px 9px #111,0 12px 22px #000b;margin:0}
+#hero h1 span{color:#eee}
+#modePanel{position:absolute;z-index:6;left:50%;top:37%;transform:translateX(-50%);width:min(340px,86vw);display:none;padding:14px;background:#222f;border:2px solid #ddd;border-radius:3px}
+#modePanel h2{color:#fff;text-align:center}
+.modeGrid{grid-template-columns:1fr;gap:7px}
+.modeCard{min-height:48px;text-align:center;align-items:center;border-radius:2px;background:linear-gradient(#888,#555);border:2px solid #ddd;padding:8px}
+.modeCard strong{font-size:14px}.modeCard small{display:none}
+#menuExtra{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+#menuExtra button,#backHomeBtn{border-radius:2px;background:#777;border:2px solid #ddd}
+#menuNote{font-size:10px;text-align:center}
+#bedrockHomeButtons{position:absolute;z-index:4;left:50%;top:43%;transform:translateX(-50%);width:min(340px,82vw);display:flex;flex-direction:column;gap:8px}
+.homeButton{height:66px;border-radius:2px;border:3px solid #eee;background:linear-gradient(#999,#777);color:#fff;font-size:22px;font-weight:800;text-shadow:0 2px 2px #333;box-shadow:0 4px 0 #222,0 7px 16px #0008}
+.homeButton.primary{background:linear-gradient(#168b0b,#087000)}
+.homeButton.purple{background:linear-gradient(#7140d6,#5529ae)}
+#bedrockCharacter{position:absolute;right:10%;top:37%;width:110px;height:230px;z-index:2;filter:drop-shadow(0 8px 8px #0009);transform:scale(1.05)}
+#bedrockCharacter .head{position:absolute;top:0;left:29px;width:58px;height:58px;background:#b98762;border:4px solid #725039}
+#bedrockCharacter .hair{position:absolute;top:-5px;left:25px;width:66px;height:17px;background:#4c3326}
+#bedrockCharacter .eye{position:absolute;top:29px;width:8px;height:7px;background:#4b9a9a}
+#bedrockCharacter .eye.one{left:42px}#bedrockCharacter .eye.two{left:67px}
+#bedrockCharacter .body{position:absolute;top:61px;left:25px;width:68px;height:89px;background:#765d51;border:4px solid #4c3d35}
+#bedrockCharacter .arm{position:absolute;top:65px;width:23px;height:84px;background:#98745e;border:3px solid #594638}
+#bedrockCharacter .arm.one{left:0}#bedrockCharacter .arm.two{right:0}
+#bedrockCharacter .leg{position:absolute;top:150px;width:29px;height:72px;background:#514a43;border:3px solid #302d29}
+#bedrockCharacter .leg.one{left:25px}#bedrockCharacter .leg.two{left:64px}
+#bedrockBottom{position:absolute;z-index:5;left:3%;right:3%;bottom:7%;display:flex;justify-content:space-between}
+#bedrockBottom button{border-radius:2px;background:#858585;border:3px solid #ddd;color:white;padding:9px 15px;font-size:14px}
+#menuSettings{display:none;position:absolute;z-index:8;left:50%;top:50%;transform:translate(-50%,-50%);width:min(360px,88vw);padding:18px;background:#222f;border:2px solid #ddd;color:#fff;text-align:center}
+#menuSettings button{margin-top:12px;border-radius:2px;background:#777}
+#homeStatus{position:absolute;bottom:2%;left:2%;font-size:10px;color:#fffe;text-shadow:0 2px 3px #000}
+@media(max-width:650px){#hero{top:9%}#hero h1{font-size:clamp(40px,11vw,68px)}#bedrockCharacter{right:2%;top:34%;transform:scale(.7);transform-origin:top right}#bedrockHomeButtons{top:43%;width:min(300px,78vw)}.homeButton{height:54px;font-size:19px}#bedrockBottom{bottom:5%}#bedrockBottom button{font-size:11px;padding:7px 9px}}
 @media(max-width:760px){#menuCard{grid-template-columns:1fr;gap:20px;max-width:520px}#hero{align-items:center;text-align:center}#logoMark{margin-bottom:12px}.subtitle{margin-bottom:12px}.featureLine{justify-content:center}#stats{display:none}#actions{gap:4px}#actions button{padding:8px 9px;font-size:10px}#brand{font-size:10px;padding:8px 10px}#mobileControls{display:block}#hint{display:none}#hotbar{bottom:max(10px,env(safe-area-inset-bottom));gap:3px;padding:5px}.slot{width:42px;height:48px;flex-basis:42px}.blockIcon{width:20px;height:20px}.slotName{font-size:8px}#inventoryGrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:390px){#actions button{padding:7px 7px;font-size:9px}#brand{letter-spacing:.3px}.slot{width:38px;flex-basis:38px}.slotCount{font-size:9px}}
 @media(max-width:350px){.slot{width:33px;flex-basis:33px;height:44px}.blockIcon{width:17px;height:17px}.slotName{font-size:7px}#hotbar{gap:2px;padding:4px}}
@@ -112,27 +147,22 @@ h1{font-size:clamp(30px,5vw,48px);line-height:.98;letter-spacing:-1.8px;margin:0
   <div id="toast" class="glass"></div>
 </div>
 
-<div id="menu">
-  <div id="menuCard">
-    <section id="hero">
-      <div id="logoMark">▦</div>
-      <h1>BEDROCK <span>WEB</span></h1>
-      <p class="subtitle">Build, explore and make your own little block world. A free, original voxel sandbox that runs in your browser.</p>
-      <div class="featureLine"><span class="featurePill">✦ Procedural world</span><span class="featurePill">▦ 8 block types</span><span class="featurePill">⌁ Keyboard + touch</span></div>
-    </section>
-    <section id="modePanel">
-      <h2>Choose your game mode</h2>
-      <div class="modeGrid">
-        <button class="modeCard" data-mode="Survival"><strong>♥ Survival</strong><small>Explore, collect blocks and build with a limited supply.</small></button>
-        <button class="modeCard" data-mode="Creative"><strong>✦ Creative</strong><small>Fly freely and build with unlimited blocks.</small></button>
-        <button class="modeCard" data-mode="Adventure"><strong>⌖ Adventure</strong><small>Explore with normal movement; building is disabled.</small></button>
-        <button class="modeCard" data-mode="Spectator"><strong>◉ Spectator</strong><small>Fly through the world and look around without editing.</small></button>
-      </div>
-      <div id="menuExtra"><button id="loadBtn" class="secondary">Load saved world</button><button id="newWorldBtn">New world</button></div>
-      <div id="menuNote">Your save stays in this browser on this device. This is a single-player prototype; multiplayer is a later feature. An internet connection is needed to load the 3D engine.</div>
-    </section>
-  </div>
-</div>
+<div id="menu"><div id="menuCard">
+<section id="hero"><h1>BEDROCK WEB</h1></section>
+<section id="modePanel"><h2>Choose your game mode</h2><div class="modeGrid">
+<button class="modeCard" data-mode="Survival"><strong>♥ Survival</strong><small>Explore and build.</small></button>
+<button class="modeCard" data-mode="Creative"><strong>✦ Creative</strong><small>Unlimited blocks and flight.</small></button>
+<button class="modeCard" data-mode="Adventure"><strong>⌖ Adventure</strong><small>Explore without editing.</small></button>
+<button class="modeCard" data-mode="Spectator"><strong>◉ Spectator</strong><small>Fly and observe.</small></button></div>
+<div id="menuExtra"><button id="loadBtn" class="secondary">Load saved world</button><button id="newWorldBtn">New world</button></div>
+<div id="menuNote">Single-player prototype · Save stored in this browser.</div>
+<button id="backHomeBtn" class="secondary" style="width:100%;margin-top:8px">Back</button></section>
+<div id="bedrockHomeButtons"><button id="playHomeBtn" class="homeButton primary">Play</button><button id="settingsHomeBtn" class="homeButton">Settings</button><button id="realmsHomeBtn" class="homeButton purple">Realms</button><button id="marketHomeBtn" class="homeButton">Marketplace</button></div>
+<div id="bedrockCharacter"><div class="head"></div><div class="hair"></div><div class="eye one"></div><div class="eye two"></div><div class="body"></div><div class="arm one"></div><div class="arm two"></div><div class="leg one"></div><div class="leg two"></div></div>
+<div id="bedrockBottom"><button id="profileHomeBtn">🧑 Profile</button><button id="dressingHomeBtn">Dressing Room</button></div>
+<div id="homeStatus">BEDROCK WEB · Original browser sandbox</div>
+<div id="menuSettings"><strong>Settings</strong><p>Game settings and controls will be expanded in a later update.</p><button id="closeSettingsHome">Close</button></div>
+</div></div>
 
 <div id="inventory" style="display:none">
   <div class="modalCard">
@@ -481,6 +511,14 @@ function showMenu(){started=false;$("menu").style.display="flex";$("pause").styl
 function startGame(nextMode=mode){setMode(nextMode);started=true;$("menu").style.display="none";$("pause").style.display="none";$("hud").style.display="block";if(matchMedia("(pointer:fine)").matches)renderer.domElement.requestPointerLock?.();}
 function newWorld(){generateWorld(Math.floor(Math.random()*1e9));player.pos.copy(spawnPosition());player.velocity.set(0,0,0);player.yaw=0;player.pitch=-.12;player.onGround=false;inventory={grass:32,dirt:24,stone:24,wood:12,leaves:16,sand:12,planks:16,brick:12};health=20;hunger=20;drawHotbar();toast("A new world is ready");}
 
+$("playHomeBtn").addEventListener("click",()=>{$("bedrockHomeButtons").style.display="none";$("bedrockCharacter").style.display="none";$("modePanel").style.display="flex";});
+$("backHomeBtn").addEventListener("click",()=>{$("modePanel").style.display="none";$("bedrockHomeButtons").style.display="flex";$("bedrockCharacter").style.display="block";});
+$("settingsHomeBtn").addEventListener("click",()=>{$("menuSettings").style.display="block";});
+$("closeSettingsHome").addEventListener("click",()=>{$("menuSettings").style.display="none";});
+$("realmsHomeBtn").addEventListener("click",()=>toast("Realms-style online worlds are planned for the multiplayer update."));
+$("marketHomeBtn").addEventListener("click",()=>toast("The add-on and resource-pack browser is planned for a future update."));
+$("profileHomeBtn").addEventListener("click",()=>toast("Player profiles are planned for a future update."));
+$("dressingHomeBtn").addEventListener("click",()=>toast("Character customization is coming in a future update."));
 for(const btn of document.querySelectorAll("[data-mode]"))btn.addEventListener("click",()=>startGame(btn.dataset.mode));
 $("newWorldBtn").addEventListener("click",()=>{newWorld();startGame("Survival");});
 $("loadBtn").addEventListener("click",()=>{if(loadWorld())startGame(mode);});
