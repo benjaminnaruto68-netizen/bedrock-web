@@ -84,6 +84,23 @@ h1{font-size:clamp(30px,5vw,48px);line-height:.98;letter-spacing:-1.8px;margin:0
 #inventoryHint{font-size:10px;color:#b8c9bb;line-height:1.4;margin-top:10px}
 @media(max-width:700px){#inventoryLayout{grid-template-columns:1fr 1fr}#inventoryLayout .bagPanel{grid-column:1/-1}#characterPreview{height:150px}#avatar{transform:scale(.78)}#bagGrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:390px){#inventoryLayout{grid-template-columns:1fr}#inventoryLayout .bagPanel{grid-column:auto}#bagGrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+/* Bedrock-inspired in-game pause screen */
+#pause{padding:0;background:#000a;backdrop-filter:blur(2px)}
+.pauseBedrock{width:min(820px,94vw);background:#292929;border:3px solid #aaa;box-shadow:0 15px 55px #000c;color:white;overflow:hidden}
+.pauseBar{height:43px;padding:0 15px;display:flex;align-items:center;justify-content:space-between;background:#444;border-bottom:3px solid #111;font-size:12px;letter-spacing:1px}
+.pauseColumns{display:grid;grid-template-columns:1fr 1.15fr;gap:13px;padding:14px}
+.pauseOptions{display:flex;flex-direction:column;gap:8px}
+.pauseOptions button{min-height:48px;text-align:left;padding:10px 14px;background:#777;border:2px solid #bbb;border-radius:2px;color:#fff;font-weight:800}
+.pauseOptions .pauseSelected{background:#397b25;border-color:#e9f4e5}
+.pausePreview{background:#383838;border:2px solid #151515;padding:14px;text-align:center}
+.pausePreview h2{margin:8px 0}.pausePreview p{font-size:12px;color:#ddd;line-height:1.5}.pausePreview small{color:#bbb}
+.pauseFigure{height:112px;position:relative}
+.pauseFigure i{position:absolute;top:4px;left:calc(50% - 20px);width:40px;height:40px;background:#c39170;border:3px solid #72513b}
+.pauseFigure b{position:absolute;top:46px;left:calc(50% - 25px);width:50px;height:42px;background:#4381b2;border:3px solid #244e70}
+.pauseFigure em{position:absolute;top:88px;left:calc(50% - 24px);width:48px;height:22px;background:#424d5d;border:3px solid #222}
+.pauseBottom{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:#191919;font-size:10px;color:#ccc}
+.pauseBottom button{background:#777;border:2px solid #ddd;border-radius:2px;color:white;padding:8px 12px}
+@media(max-width:520px){.pauseColumns{grid-template-columns:1fr;padding:8px}.pausePreview{display:none}.pauseOptions button{min-height:43px}}
 /* Bedrock-style Play hub, world setup and add-on manager */
 .playScreen{width:min(850px,94vw)!important;max-height:88vh;overflow:auto;background:#292929!important;border:3px solid #999!important;padding:0!important;color:#fff}
 .playHeader{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#3b3b3b;border-bottom:3px solid #111}
@@ -237,9 +254,12 @@ h1{font-size:clamp(30px,5vw,48px);line-height:.98;letter-spacing:-1.8px;margin:0
     </div>
   </div>
 </div>
-<div id="pause" style="display:none">
-  <div id="pauseCard" class="glass"><h2>Game paused</h2><div class="menurow"><button id="resumeBtn">Resume</button><button id="backMenuBtn" class="secondary">Main menu</button></div><div class="menurow"><button id="pauseSaveBtn" class="secondary">Save world</button></div></div>
-</div>
+<div id="pause" style="display:none"><div id="pauseCard" class="pauseBedrock">
+<header class="pauseBar"><b>GAME MENU</b><span>BEDROCK WEB</span></header>
+<div class="pauseColumns"><nav class="pauseOptions"><button id="resumeBtn" class="pauseSelected">Resume Game</button><button id="pauseSettingsBtn">Settings</button><button id="pauseSaveBtn">Save World</button><button id="backMenuBtn">Save &amp; Quit</button></nav>
+<section class="pausePreview"><div class="pauseFigure"><i></i><b></b><em></em></div><h2>Game Paused</h2><p>Your world is paused. Save before leaving to keep your progress on this device.</p><small id="pauseWorldLabel">Single-player world</small></section></div>
+<footer class="pauseBottom"><span>BEDROCK WEB · Original browser sandbox</span><button id="pauseContinueBtn">Back to Game</button></footer>
+</div></div>
 <div id="fatal"><h1>Bedrock Web could not start</h1><p id="fatalMessage">Your browser could not create the 3D game.</p><p>Try reloading the page, closing other tabs, or using the latest Chrome browser with hardware acceleration enabled.</p></div>
 
 <script type="module">
@@ -598,6 +618,9 @@ $("modeBtn").addEventListener("click",()=>{const modes=["Survival","Creative","A
 $("inventoryBtn").addEventListener("click",openInventory);$("mobileBagBtn").addEventListener("click",openInventory);$("closeInventory").addEventListener("click",closeInventory);
 $("pauseBtn").addEventListener("click",()=>{$("pause").style.display="flex";document.exitPointerLock?.();});
 $("resumeBtn").addEventListener("click",()=>{$("pause").style.display="none";if(matchMedia("(pointer:fine)").matches)renderer.domElement.requestPointerLock?.();});
+$("pauseContinueBtn").addEventListener("click",()=>$("resumeBtn").click());
+$("pauseSettingsBtn").addEventListener("click",()=>toast("Game settings panel is being built; use the main Settings menu for now."));
+
 $("backMenuBtn").addEventListener("click",showMenu);
 function renderInventory(){
   const grid=$("bagGrid");grid.innerHTML="";
