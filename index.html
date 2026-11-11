@@ -340,8 +340,8 @@ const leftLegPivot=new THREE.Group();leftLegPivot.position.set(-.16,.73,0);playe
 const leftLeg=new THREE.Mesh(new THREE.BoxGeometry(.25,.70,.27),pantsMat);leftLeg.position.y=-.35;leftLegPivot.add(leftLeg);
 const rightLegPivot=new THREE.Group();rightLegPivot.position.set(.16,.73,0);playerModel.add(rightLegPivot);
 const rightLeg=new THREE.Mesh(new THREE.BoxGeometry(.25,.70,.27),pantsMat);rightLeg.position.y=-.35;rightLegPivot.add(rightLeg);
-avatarPart(.27,.16,.32,shoeMat,-.16,.08,-.025);
-avatarPart(.27,.16,.32,shoeMat,.16,.08,-.025);
+const leftShoe=new THREE.Mesh(new THREE.BoxGeometry(.27,.16,.32),shoeMat);leftShoe.position.set(0,-.65,-.025);leftLegPivot.add(leftShoe);
+const rightShoe=new THREE.Mesh(new THREE.BoxGeometry(.27,.16,.32),shoeMat);rightShoe.position.set(0,-.65,-.025);rightLegPivot.add(rightShoe);
 let walkClock=0,walkBlend=0,movingNow=false;
 playerModel.visible=false;scene.add(playerModel);
 function updateCameraButton(){
