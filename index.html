@@ -99,7 +99,7 @@ h1{font-size:clamp(30px,5vw,48px);line-height:.98;letter-spacing:-1.8px;margin:0
   <div id="topbar">
     <div id="brand" class="glass"><span class="brandCube"></span> BEDROCK WEB</div>
     <div id="stats" class="glass"><span class="statGroup"><span class="heart">♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥</span></span><span class="statDivider"></span><span class="statGroup"><span class="food">● ● ● ● ● ● ● ● ● ●</span></span><span class="statDivider"></span><span id="coordinates">0, 0, 0</span></div>
-    <div id="actions"><button id="modeBtn">Survival</button><button id="inventoryBtn">Inventory</button><button id="saveBtn">Save</button><button id="pauseBtn" class="secondary">Menu</button></div>
+    <div id="actions"><button id="modeBtn">Survival</button><button id="cameraBtn" class="secondary">Camera: First</button><button id="inventoryBtn">Inventory</button><button id="saveBtn">Save</button><button id="pauseBtn" class="secondary">Menu</button></div>
   </div>
   <div id="crosshair"></div><div id="targetOutline">WASD move · Mouse look</div>
   <div id="hotbar" class="glass" aria-label="Hotbar"></div>
@@ -317,6 +317,38 @@ function generateWorld(seed){
 }
 
 const player={pos:new THREE.Vector3(0,4,8),velocity:new THREE.Vector3(),yaw:0,pitch:-.12,onGround:false};
+// Original low-poly player model used for third-person views.
+let cameraMode=0;
+const cameraModeNames=["First-person","Third-person back","Third-person front"];
+const playerModel=new THREE.Group();
+const skinMat=new THREE.MeshLambertMaterial({color:0xd6a27b});
+const shirtMat=new THREE.MeshLambertMaterial({color:0x3478b9});
+const pantsMat=new THREE.MeshLambertMaterial({color:0x354b6b});
+const shoeMat=new THREE.MeshLambertMaterial({color:0x202b39});
+function avatarPart(w,h,d,material,x,y,z){
+  const part=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);
+  part.position.set(x,y,z);part.castShadow=false;part.receiveShadow=false;playerModel.add(part);return part;
+}
+avatarPart(.42,.42,.42,skinMat,0,1.68,0);
+avatarPart(.58,.72,.32,shirtMat,0,1.10,0);
+avatarPart(.20,.68,.22,skinMat,-.40,1.12,0);
+avatarPart(.20,.68,.22,skinMat,.40,1.12,0);
+avatarPart(.25,.70,.27,pantsMat,-.16,.38,0);
+avatarPart(.25,.70,.27,pantsMat,.16,.38,0);
+avatarPart(.27,.16,.32,shoeMat,-.16,.08,-.025);
+avatarPart(.27,.16,.32,shoeMat,.16,.08,-.025);
+playerModel.visible=false;scene.add(playerModel);
+function updateCameraButton(){
+  const labels=["Camera: First","Camera: Back","Camera: Front"];
+  $("cameraBtn").textContent=labels[cameraMode];
+}
+function cycleCamera(){
+  cameraMode=(cameraMode+1)%3;
+  playerModel.visible=cameraMode!==0;
+  updateCameraButton();
+  toast(cameraModeNames[cameraMode]);
+}
+$("cameraBtn").addEventListener("click",cycleCamera);
 const raycaster=new THREE.Raycaster();raycaster.far=6.5;
 const centerNdc=new THREE.Vector2(0,0);
 const outline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.015,1.015,1.015)),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.9}));outline.visible=false;scene.add(outline);
@@ -431,7 +463,21 @@ cloud(-15,15,-18,1.5);cloud(12,18,-25,1.8);cloud(28,14,4,1.3);cloud(-28,17,10,1.
 
 function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));renderer.setSize(innerWidth,innerHeight);}
 addEventListener("resize",resize);
-function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-lastFrame)/1000,.04);lastFrame=now;if(started&&$("inventory").style.display!=="flex"&&$("pause").style.display!=="flex")movePlayer(dt);camera.position.set(player.pos.x,player.pos.y+1.62,player.pos.z);camera.rotation.order="YXZ";camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;updateStatus();if(started&&now-lastTargetUpdate>120){updateTarget();lastTargetUpdate=now;}renderer.render(scene,camera);}
+function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-lastFrame)/1000,.04);lastFrame=now;if(started&&$("inventory").style.display!=="flex"&&$("pause").style.display!=="flex")movePlayer(dt);if(cameraMode===0){
+    playerModel.visible=false;
+    camera.position.set(player.pos.x,player.pos.y+1.62,player.pos.z);
+    camera.rotation.order="YXZ";camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
+  }else{
+    playerModel.visible=true;
+    playerModel.position.set(player.pos.x,player.pos.y,player.pos.z);
+    playerModel.rotation.y=player.yaw+Math.PI;
+    const forwardX=-Math.sin(player.yaw),forwardZ=-Math.cos(player.yaw);
+    const distance=4.6,height=1.9;
+    const side=cameraMode===2?1:-1;
+    camera.position.set(player.pos.x+forwardX*distance*side,player.pos.y+height,player.pos.z+forwardZ*distance*side);
+    camera.lookAt(player.pos.x,player.pos.y+1.05,player.pos.z);
+  }
+  updateStatus();if(started&&now-lastTargetUpdate>120){updateTarget();lastTargetUpdate=now;}renderer.render(scene,camera);}
 let lastTargetUpdate=0;
 
 // Start with a generated world and a safe, level spawn clearing.
