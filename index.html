@@ -329,14 +329,20 @@ function avatarPart(w,h,d,material,x,y,z){
   const part=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);
   part.position.set(x,y,z);part.castShadow=false;part.receiveShadow=false;playerModel.add(part);return part;
 }
-avatarPart(.42,.42,.42,skinMat,0,1.68,0);
-avatarPart(.58,.72,.32,shirtMat,0,1.10,0);
-avatarPart(.20,.68,.22,skinMat,-.40,1.12,0);
-avatarPart(.20,.68,.22,skinMat,.40,1.12,0);
-avatarPart(.25,.70,.27,pantsMat,-.16,.38,0);
-avatarPart(.25,.70,.27,pantsMat,.16,.38,0);
+const avatarHead=avatarPart(.42,.42,.42,skinMat,0,1.68,0);
+const avatarTorso=avatarPart(.58,.72,.32,shirtMat,0,1.10,0);
+// Limb pivots sit at the shoulders and hips so the arms and legs swing naturally.
+const leftArmPivot=new THREE.Group();leftArmPivot.position.set(-.40,1.43,0);playerModel.add(leftArmPivot);
+const leftArm=new THREE.Mesh(new THREE.BoxGeometry(.20,.68,.22),skinMat);leftArm.position.y=-.34;leftArmPivot.add(leftArm);
+const rightArmPivot=new THREE.Group();rightArmPivot.position.set(.40,1.43,0);playerModel.add(rightArmPivot);
+const rightArm=new THREE.Mesh(new THREE.BoxGeometry(.20,.68,.22),skinMat);rightArm.position.y=-.34;rightArmPivot.add(rightArm);
+const leftLegPivot=new THREE.Group();leftLegPivot.position.set(-.16,.73,0);playerModel.add(leftLegPivot);
+const leftLeg=new THREE.Mesh(new THREE.BoxGeometry(.25,.70,.27),pantsMat);leftLeg.position.y=-.35;leftLegPivot.add(leftLeg);
+const rightLegPivot=new THREE.Group();rightLegPivot.position.set(.16,.73,0);playerModel.add(rightLegPivot);
+const rightLeg=new THREE.Mesh(new THREE.BoxGeometry(.25,.70,.27),pantsMat);rightLeg.position.y=-.35;rightLegPivot.add(rightLeg);
 avatarPart(.27,.16,.32,shoeMat,-.16,.08,-.025);
 avatarPart(.27,.16,.32,shoeMat,.16,.08,-.025);
+let walkClock=0,walkBlend=0,movingNow=false;
 playerModel.visible=false;scene.add(playerModel);
 function updateCameraButton(){
   const labels=["Camera: First","Camera: Back","Camera: Front"];
@@ -433,6 +439,7 @@ function movePlayer(dt){
   const move=new THREE.Vector3();
   if(keys.KeyW||keys.ArrowUp)move.add(forward);if(keys.KeyS||keys.ArrowDown)move.sub(forward);if(keys.KeyD||keys.ArrowRight)move.add(right);if(keys.KeyA||keys.ArrowLeft)move.sub(right);
   move.addScaledVector(forward,-touchMove.y);move.addScaledVector(right,touchMove.x);if(move.lengthSq()>1)move.normalize();
+  movingNow=move.lengthSq()>.015;
   const fast=keys.ShiftLeft||keys.ShiftRight;const speed=fast?7.2:4.7;
   if(mode==="Creative"||mode==="Spectator"){
     player.pos.x+=move.x*speed*dt;player.pos.z+=move.z*speed*dt;
@@ -463,7 +470,23 @@ cloud(-15,15,-18,1.5);cloud(12,18,-25,1.8);cloud(28,14,4,1.3);cloud(-28,17,10,1.
 
 function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));renderer.setSize(innerWidth,innerHeight);}
 addEventListener("resize",resize);
-function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-lastFrame)/1000,.04);lastFrame=now;if(started&&$("inventory").style.display!=="flex"&&$("pause").style.display!=="flex")movePlayer(dt);if(cameraMode===0){
+function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-lastFrame)/1000,.04);lastFrame=now;if(started&&$("inventory").style.display!=="flex"&&$("pause").style.display!=="flex")movePlayer(dt);// Animate the visible avatar: alternating arm/leg swing while walking,
+  // a small idle sway, and a brief upward pose while airborne.
+  const targetWalk=movingNow&&started&&player.onGround?1:0;
+  walkBlend+=(targetWalk-walkBlend)*Math.min(1,dt*9);
+  if(walkBlend>.001)walkClock+=dt*(keys.ShiftLeft||keys.ShiftRight?12:8);
+  const swing=Math.sin(walkClock)*.68*walkBlend;
+  leftArmPivot.rotation.x=swing-.035;
+  rightArmPivot.rotation.x=-swing-.035;
+  leftLegPivot.rotation.x=-swing*.82;
+  rightLegPivot.rotation.x=swing*.82;
+  const idleSway=Math.sin(now*.0018)*.018*(1-walkBlend);
+  avatarTorso.rotation.z=idleSway;
+  avatarHead.rotation.z=-idleSway*.55;
+  const airPose=player.onGround?0:Math.min(1,Math.abs(player.velocity.y)/8)*.22;
+  leftArmPivot.rotation.x-=airPose;
+  rightArmPivot.rotation.x-=airPose;
+  if(cameraMode===0){
     playerModel.visible=false;
     camera.position.set(player.pos.x,player.pos.y+1.62,player.pos.z);
     camera.rotation.order="YXZ";camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
