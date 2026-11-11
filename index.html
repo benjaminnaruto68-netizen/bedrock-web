@@ -307,9 +307,45 @@ function createMob(type,x,z){
  }
  root.position.set(x,terrainHeight(Math.round(x),Math.round(z))+.5,z);
  scene.add(root);
- mobs.push({type,root,legs,phase:Math.random()*Math.PI*2,heading:Math.random()*Math.PI*2,turnIn:2+Math.random()*4,hostile:look.hostile,attackCooldown:0});
+ mobs.push({type,root,legs,phase:Math.random()*Math.PI*2,heading:Math.random()*Math.PI*2,turnIn:2+Math.random()*4,hostile:look.hostile,attackCooldown:0,hp:type==="warden"?32:(look.hostile?12:6),maxHp:type==="warden"?32:(look.hostile?12:6)});
 }
 function clearMobs(){for(const mob of mobs)scene.remove(mob.root);mobs.length=0;}
+let audioCtx=null;
+function playMobSound(kind){
+  try{
+    audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==="suspended")audioCtx.resume();
+    const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
+    const now=audioCtx.currentTime;
+    const tones={hit:[180,.08],animal:[420,.16],hostile:[95,.22],death:[260,.28]};
+    const [freq,duration]=tones[kind]||tones.hit;
+    osc.type=kind==="hostile"?"sawtooth":"triangle";
+    osc.frequency.setValueAtTime(freq,now);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(45,freq*.55),now+duration);
+    gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.10,now+.015);gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+    osc.connect(gain);gain.connect(audioCtx.destination);osc.start(now);osc.stop(now+duration+.02);
+  }catch(e){}
+}
+function attackMob(){
+  if(!started||mode==="Spectator"||mode==="Adventure")return false;
+  camera.updateMatrixWorld();raycaster.setFromCamera(centerNdc,camera);
+  const candidates=[];
+  for(const mob of mobs){const hits=raycaster.intersectObject(mob.root,true);if(hits.length&&hits[0].distance<4.2)candidates.push({mob,distance:hits[0].distance});}
+  candidates.sort((a,b)=>a.distance-b.distance);
+  if(!candidates.length)return false;
+  const mob=candidates[0].mob;
+  mob.hp-=mode==="Creative"?999:4;
+  playMobSound("hit");
+  mob.root.scale.setScalar(.94);
+  setTimeout(()=>{if(mob.root.parent)mob.root.scale.setScalar(1);},90);
+  if(mob.hp<=0){
+    scene.remove(mob.root);const i=mobs.indexOf(mob);if(i>=0)mobs.splice(i,1);
+    const drop=mob.type==="cow"||mob.type==="pig"||mob.type==="sheep"||mob.type==="chicken"?"food":mob.type==="warden"?"rare drop":"experience";
+    if(drop==="food"){inventory.food=(inventory.food||0)+1;hunger=Math.min(20,hunger+2);}
+    playMobSound("death");toast(`${mob.type} defeated · ${drop} dropped`);
+  }else toast(`${mob.type} · ${mob.hp}/${mob.maxHp} HP`);
+  return true;
+}
 function spawnStarterMobs(){
  clearMobs();
  createMob("cow",-9,4);createMob("cow",11,13);
@@ -317,7 +353,7 @@ function spawnStarterMobs(){
  createMob("zombie",15,7);createMob("skeleton",-16,10);createMob("warden",-12,-12);
 }
 function updateMobs(dt,now){
- for(const mob of mobs){
+ for(const mob of [...mobs]){
    const p=mob.root.position,dx=player.pos.x-p.x,dz=player.pos.z-p.z,dist=Math.hypot(dx,dz);
    mob.turnIn-=dt;
    if(mob.hostile&&dist<19&&dist>1.35){
@@ -335,7 +371,7 @@ function updateMobs(dt,now){
    mob.legs.forEach((leg,i)=>{leg.rotation.x=swing*(i%2===0?1:-1);});
    if(mob.hostile&&dist<1.5&&mob.attackCooldown<=0){
      mob.attackCooldown=1.6;
-     if(mode==="Survival"){health=Math.max(0,health-2);toast(mob.type==="warden"?"The Warden struck you!":`A ${mob.type} hit you!`);if(health===0){player.pos.copy(spawnPosition());health=20;toast("You respawned");}}
+     if(mode==="Survival"){health=Math.max(0,health-2);playMobSound("hostile");toast(mob.type==="warden"?"The Warden struck you!":`A ${mob.type} hit you!`);if(health===0){player.pos.copy(spawnPosition());player.velocity.set(0,0,0);health=20;toast("You respawned");}}
    }
    mob.attackCooldown=Math.max(0,mob.attackCooldown-dt);
  }
@@ -480,7 +516,7 @@ function bodyCollides(x,feet,z){const r=.29;const minX=cell(x-r),maxX=cell(x+r),
 function groundUnder(x,z,feet){const r=.27;const xs=[x-r,x+r,x],zs=[z-r,z+r,z];let highest=-Infinity;for(const px of xs)for(const pz of zs){const ix=cell(px),iz=cell(pz);for(let y=Math.floor(feet+.25);y>=-3;y--){if(blockAtCell(ix,y,iz)){const top=y+.5;if(top<=feet+.22){highest=Math.max(highest,top);break;}}}}return highest===-Infinity?null:highest;}
 function targetBlock(){camera.updateMatrixWorld();raycaster.setFromCamera(centerNdc,camera);const hits=raycaster.intersectObjects(instanceMeshes,false);if(!hits.length)return null;const hit=hits[0],k=hit.object.userData.blockKeys[hit.instanceId];if(!k)return null;return{hit,key:k,pos:parseKey(k)};}
 function updateTarget(){targetHit=targetBlock();if(targetHit){outline.position.set(...targetHit.pos);outline.visible=true;}else outline.visible=false;}
-function breakBlock(){if(!started||$("inventory").style.display==="flex")return;if(mode==="Adventure"||mode==="Spectator"){toast(`${mode} mode does not allow breaking`);return;}const target=targetBlock();if(!target)return;const [x,y,z]=target.pos;if(y<=-2)return;const type=blocks.get(target.key);removeBlock(x,y,z);if(mode==="Survival")inventory[type]=(inventory[type]||0)+1;rebuildMeshes();drawHotbar();updateTarget();}
+function breakBlock(){if(!started||$("inventory").style.display==="flex")return;if(mode==="Adventure"||mode==="Spectator"){toast(`${mode} mode does not allow breaking`);return;}if(attackMob())return;const target=targetBlock();if(!target)return;const [x,y,z]=target.pos;if(y<=-2)return;const type=blocks.get(target.key);removeBlock(x,y,z);if(mode==="Survival")inventory[type]=(inventory[type]||0)+1;rebuildMeshes();drawHotbar();updateTarget();}
 function placeBlock(){if(!started||$("inventory").style.display==="flex")return;if(mode==="Adventure"||mode==="Spectator"){toast(`${mode} mode does not allow placing`);return;}const target=targetBlock();if(!target||!target.hit.face)return;const normal=target.hit.face.normal;const [bx,by,bz]=target.pos;const x=bx+Math.round(normal.x),y=by+Math.round(normal.y),z=bz+Math.round(normal.z),type=blockTypes[selected];if(blocks.has(key(x,y,z)))return;if(mode==="Survival"&&(inventory[type]||0)<1){toast(`No ${blockLabels[type].toLowerCase()} left`);return;}if(Math.abs(x-player.pos.x)<.78&&Math.abs(z-player.pos.z)<.78&&y+.5>player.pos.y+.05&&y-.5<player.pos.y+1.72){toast("You cannot place a block inside yourself");return;}addBlock(x,y,z,type);if(mode==="Survival")inventory[type]--;rebuildMeshes();drawHotbar();updateTarget();}
 
 const canvas=renderer.domElement;
