@@ -25,7 +25,7 @@ button:hover{filter:brightness(1.12);border-color:#ffffff55}button:active{transf
 #modeBtn{background:linear-gradient(180deg,#526c9b,#344b75)}
 #crosshair{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);filter:drop-shadow(0 1px 3px #000);opacity:.95}
 #crosshair:before,#crosshair:after{content:"";position:absolute;background:#fff;border-radius:2px}#crosshair:before{width:2px;height:20px;left:10px;top:1px}#crosshair:after{height:2px;width:20px;top:10px;left:1px}
-#targetOutline{position:absolute;left:50%;top:calc(50% + 25px);transform:translateX(-50%);font-size:10px;color:#fff;text-shadow:0 2px 4px #000;letter-spacing:.2px;white-space:nowrap;opacity:.85}
+#targetOutline{display:none}
 #hotbar{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:5px;padding:7px;border-radius:15px;pointer-events:auto;max-width:calc(100vw - 18px)}
 .slot{position:relative;width:54px;height:56px;flex:0 0 54px;padding:4px 3px;border-radius:9px;background:linear-gradient(145deg,#34453a,#1a2a21);border:2px solid #ffffff35;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;box-shadow:inset 0 1px 0 #ffffff12}
 .slot.selected{border:2px solid #fff;background:linear-gradient(145deg,#526b50,#304c35);box-shadow:0 0 0 2px #a9ef7d,0 0 16px #a9ef7d77}
@@ -37,7 +37,7 @@ button:hover{filter:brightness(1.12);border-color:#ffffff55}button:active{transf
 #mobileActions{position:absolute;right:max(14px,env(safe-area-inset-right));bottom:calc(max(100px,env(safe-area-inset-bottom) + 90px));display:grid;grid-template-columns:repeat(2,62px);gap:8px;pointer-events:auto}
 #mobileActions button{height:54px;padding:4px 2px;font-size:10px;background:linear-gradient(180deg,#314c3aee,#172d20ee);touch-action:none}
 #lookLabel{position:absolute;right:14px;top:75px;font-size:10px;color:#fff;text-shadow:0 2px 4px #000;opacity:.8}
-#hint{position:absolute;left:50%;top:calc(50% + 35px);transform:translateX(-50%);padding:5px 10px;border-radius:20px;background:#0a1b13a6;color:#f4fff5;font-size:10px;text-shadow:0 1px 2px #000;white-space:nowrap}
+#hint{position:absolute;left:50%;top:auto;bottom:94px;transform:translateX(-50%);padding:7px 13px;border:1px solid #ffffff30;border-radius:20px;background:#0a1b13c9;color:#f4fff5;font-size:10px;text-shadow:0 1px 2px #000;white-space:nowrap;box-shadow:0 4px 16px #0004}
 #toast{position:absolute;top:82px;left:50%;transform:translateX(-50%);padding:9px 14px;border-radius:12px;font-size:12px;font-weight:750;display:none;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
 #menu,#inventory,#pause{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:18px;background:linear-gradient(135deg,rgba(5,17,12,.60),rgba(4,13,10,.78));overflow:auto}
 #menuCard{width:min(760px,100%);border-radius:24px;padding:clamp(20px,4vw,34px);display:grid;grid-template-columns:1.1fr .9fr;gap:25px;background:linear-gradient(145deg,rgba(25,48,34,.97),rgba(9,22,16,.97));border:1px solid #ffffff2a;box-shadow:0 24px 80px #0009}
@@ -209,7 +209,7 @@ function canvasTexture(kind, seed=1){
   if(kind==="woodTop"){ctx.strokeStyle="#80522e";ctx.lineWidth=1.4;for(let i=0;i<4;i++){ctx.beginPath();ctx.ellipse(16,16,4+i*3,4+i*3,0,0,Math.PI*2);ctx.stroke();}}
   if(kind==="planks"){ctx.strokeStyle="#80552f";ctx.lineWidth=1;for(let y=7;y<32;y+=9){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(32,y);ctx.stroke();}ctx.fillStyle="#68472d";ctx.fillRect(8,3,2,2);ctx.fillRect(24,18,2,2);}
   if(kind==="brick"){ctx.strokeStyle="#744237";ctx.lineWidth=1.3;for(let y=0;y<32;y+=8){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(32,y);ctx.stroke();ctx.beginPath();ctx.moveTo((y/8%2)*8,y);ctx.lineTo((y/8%2)*8,y+8);ctx.moveTo(16+(y/8%2)*8,y);ctx.lineTo(16+(y/8%2)*8,y+8);ctx.stroke();}}
-  for(let i=0;i<170;i++){
+  for(let i=0;i<88;i++){
     const x=Math.floor(r()*32),y=Math.floor(r()*32),a=.08+r()*.18;
     if(kind==="leaves"&&r()<.16)continue;
     const delta=r()<.5?-1:1;ctx.fillStyle=`rgba(${delta<0?0:255},${delta<0?0:255},${delta<0?0:255},${a})`;ctx.fillRect(x,y,1+(r()<.12?1:0),1+(r()<.12?1:0));
@@ -246,8 +246,26 @@ function smooth(t){return t*t*(3-2*t);}
 function valueNoise(x,z,seed){const x0=Math.floor(x),z0=Math.floor(z),fx=smooth(x-x0),fz=smooth(z-z0);const h=(a,b)=>{const n=Math.sin(a*127.1+b*311.7+seed*.017)*43758.5453;return(n-Math.floor(n))*2-1;};const a=h(x0,z0),b=h(x0+1,z0),c=h(x0,z0+1),d=h(x0+1,z0+1);return(a+(b-a)*fx)+((c+(d-c)*fx)-(a+(b-a)*fx))*fz;}
 function terrainHeight(x,z){const n=valueNoise(x*.085,z*.085,worldSeed)*2.3+valueNoise(x*.19,z*.19,worldSeed+9)*.75+Math.sin((x+z)*.11)*.35;return Math.max(1,Math.min(8,Math.round(3.5+n)));}
 function makeTree(x,y,z,rng){
-  const trunk=4+(rng()<.35?1:0);for(let i=1;i<=trunk;i++)addBlock(x,y+i,z,"wood");
-  for(let layer=0;layer<4;layer++){const yy=y+trunk-1+layer;const radius=layer===3?1:layer===0?2:2-layer*.15;for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++){if(Math.abs(dx)+Math.abs(dz)>4-layer*.55)continue;if(dx===0&&dz===0&&layer<2)continue;if(rng()>.07)addBlock(x+dx,yy,z+dz,"leaves");}}
+  // Compact rounded crowns replace the old broad, flat leaf slabs.
+  const trunk=4+(rng()<.3?1:0);
+  for(let i=1;i<=trunk;i++)addBlock(x,y+i,z,"wood");
+  const crownY=y+trunk-1;
+  const layers=[
+    {dy:-1,r:1.35},{dy:0,r:2.05},{dy:1,r:2.15},{dy:2,r:1.75},{dy:3,r:1.05}
+  ];
+  for(const layer of layers){
+    const r=layer.r;
+    for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++){
+      const dist=(dx*dx+dz*dz)/(r*r);
+      if(dist>1.18)continue;
+      if(Math.abs(dx)===2&&Math.abs(dz)===2&&rng()<.8)continue;
+      if(rng()>.10)addBlock(x+dx,crownY+layer.dy,z+dz,"leaves");
+    }
+  }
+  // Small branch leaves break up the silhouette without making a giant cube.
+  for(const [dx,dz] of [[-2,0],[2,0],[0,-2],[0,2]]){
+    if(rng()>.35)addBlock(x+dx,crownY,z+dz,"leaves");
+  }
 }
 function spawnPosition(){const x=0,z=8;return new THREE.Vector3(x,terrainHeight(x,z)+.52,z);}
 const CHUNK_SIZE=16,CHUNK_RADIUS=1;
