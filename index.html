@@ -601,7 +601,7 @@ $("backHomeBtn").addEventListener("click",()=>{$("modePanel").style.display="non
 $("settingsHomeBtn").addEventListener("click",()=>{$("menuSettings").style.display="block";});
 $("closeSettingsHome").addEventListener("click",()=>{$("menuSettings").style.display="none";});
 $("realmsHomeBtn").addEventListener("click",()=>toast("Realms-style online worlds are planned for the multiplayer update."));
-$("marketHomeBtn").addEventListener("click",()=>toast("The add-on and resource-pack browser is planned for a future update."));
+$("marketHomeBtn").addEventListener("click",()=>window.open("https://www.minecraft.net/en-us/marketplace","_blank","noopener"));
 $("profileHomeBtn").addEventListener("click",()=>toast("Player profiles are planned for a future update."));
 function showSavedSkin(){const data=localStorage.getItem("bedrockWebSkinPNG");if(data){$("skinPreviewImage").src=data;$("skinPreviewImage").style.display="block";$("skinPreviewLabel").textContent="Custom skin selected";$("skinStatus").textContent="Skin saved in this browser.";}else{$("skinPreviewImage").removeAttribute("src");$("skinPreviewLabel").textContent="No skin selected";$("skinStatus").textContent="No custom skin loaded.";}}
 $("dressingHomeBtn").addEventListener("click",()=>{$("skinRoom").style.display="flex";showSavedSkin();});
@@ -611,7 +611,7 @@ $("skinFile").addEventListener("change",e=>{const file=e.target.files&&e.target.
 $("removeSkinBtn").addEventListener("click",()=>{localStorage.removeItem("bedrockWebSkinPNG");$("skinFile").value="";showSavedSkin();toast("Custom skin removed");});
 $("dressingHomeBtn").addEventListener("click",()=>toast("Character customization is coming in a future update."));
 for(const btn of document.querySelectorAll("[data-mode]"))btn.addEventListener("click",()=>startGame(btn.dataset.mode));
-$("newWorldBtn").addEventListener("click",()=>{newWorld();startGame("Survival");});
+// World creation now uses the Create New World panel in the Play screen.
 $("loadBtn").addEventListener("click",()=>{if(loadWorld())startGame(mode);});
 $("saveBtn").addEventListener("click",saveWorld);$("pauseSaveBtn").addEventListener("click",saveWorld);
 $("modeBtn").addEventListener("click",()=>{const modes=["Survival","Creative","Adventure","Spectator"];setMode(modes[(modes.indexOf(mode)+1)%modes.length]);});
