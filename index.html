@@ -84,6 +84,36 @@ h1{font-size:clamp(30px,5vw,48px);line-height:.98;letter-spacing:-1.8px;margin:0
 #inventoryHint{font-size:10px;color:#b8c9bb;line-height:1.4;margin-top:10px}
 @media(max-width:700px){#inventoryLayout{grid-template-columns:1fr 1fr}#inventoryLayout .bagPanel{grid-column:1/-1}#characterPreview{height:150px}#avatar{transform:scale(.78)}#bagGrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:390px){#inventoryLayout{grid-template-columns:1fr}#inventoryLayout .bagPanel{grid-column:auto}#bagGrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+/* Bedrock-style Play hub, world setup and add-on manager */
+.playScreen{width:min(850px,94vw)!important;max-height:88vh;overflow:auto;background:#292929!important;border:3px solid #999!important;padding:0!important;color:#fff}
+.playHeader{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#3b3b3b;border-bottom:3px solid #111}
+.playHeader h2{margin:0;text-transform:uppercase;letter-spacing:2px}
+.playTabs{display:grid;grid-template-columns:repeat(3,1fr);background:#555;border-bottom:4px solid #111}
+.playTab{border-radius:0!important;background:#777!important;border:2px solid #aaa!important;padding:13px 4px!important;font-weight:900}
+.playTab.active{background:#3b6e9d!important;border-bottom:4px solid #eee!important}
+.playContent{padding:12px;min-height:230px}
+.playPane{display:none}.playPane.active{display:block}
+.playActions{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+.playActions button,.playFooter button,.emptyPane button,.worldEntry button{border-radius:2px!important;border:2px solid #ddd!important;background:#777!important;color:#fff!important;padding:10px 14px!important}
+.playActions .greenAction{background:#32851e!important}
+.worldEntry{display:grid;grid-template-columns:76px 1fr auto;align-items:center;gap:12px;background:#414141;border:2px solid #151515;padding:10px;margin:9px 0}
+.worldThumb{height:58px;display:grid;place-items:center;font-size:34px;background:linear-gradient(#7cb8dc,#4a8a37)}
+.worldEntry small{display:block;color:#ddd;margin-top:5px}
+.playFootnote,.addonNote{font-size:11px;color:#ccc}
+.emptyPane{text-align:center;max-width:490px;margin:16px auto;line-height:1.5}
+.emptyPane> :first-child{font-size:30px}
+.emptyPane input{width:100%;padding:10px;margin:8px 0;background:#171717;color:white;border:1px solid #888}
+.playFooter{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;background:#1b1b1b;border-top:2px solid #111}
+#createWorldPane{display:none;padding:15px;background:#363636;border-top:2px solid #111}
+#createWorldPane label{display:block;margin:10px 0 4px;text-align:left;font-size:12px;color:#ddd}
+#createWorldPane input:not([type=checkbox]),#createWorldPane select{width:100%;padding:10px;background:#1c1c1c;color:white;border:1px solid #888}
+#addonRoom{display:none;position:absolute;inset:0;z-index:30;background:#000b;align-items:center;justify-content:center;padding:14px}
+.addonCard{width:min(570px,95vw);max-height:88%;overflow:auto;background:#292929;color:#fff;padding:18px;border:3px solid #aaa}
+.addonCard header{display:flex;justify-content:space-between;align-items:center}
+.addonCard button{background:#777;color:white;border:2px solid #ddd;padding:9px;margin:5px}
+.addonCard input{display:block;margin:12px 0}
+.addonRow{padding:9px;margin:6px 0;background:#444;border:1px solid #777}
+@media(max-width:520px){.playContent{padding:8px}.worldEntry{grid-template-columns:55px 1fr auto;gap:7px}.playFooter button{padding:8px!important;font-size:11px}}
 /* Dressing room: user-provided skin files */
 #skinRoom{display:none;position:absolute;z-index:20;inset:0;background:#000b;align-items:center;justify-content:center;padding:14px}
 #skinRoomCard{width:min(680px,96vw);max-height:92%;overflow:auto;background:#292929;border:3px solid #aaa;box-shadow:0 15px 50px #000b;color:#fff;padding:18px}
@@ -161,14 +191,17 @@ h1{font-size:clamp(30px,5vw,48px);line-height:.98;letter-spacing:-1.8px;margin:0
 
 <div id="menu"><div id="menuCard">
 <section id="hero"><h1>BEDROCK WEB</h1></section>
-<section id="modePanel"><h2>Choose your game mode</h2><div class="modeGrid">
-<button class="modeCard" data-mode="Survival"><strong>♥ Survival</strong><small>Explore and build.</small></button>
-<button class="modeCard" data-mode="Creative"><strong>✦ Creative</strong><small>Unlimited blocks and flight.</small></button>
-<button class="modeCard" data-mode="Adventure"><strong>⌖ Adventure</strong><small>Explore without editing.</small></button>
-<button class="modeCard" data-mode="Spectator"><strong>◉ Spectator</strong><small>Fly and observe.</small></button></div>
-<div id="menuExtra"><button id="loadBtn" class="secondary">Load saved world</button><button id="newWorldBtn">New world</button></div>
-<div id="menuNote">Single-player prototype · Save stored in this browser.</div>
-<button id="backHomeBtn" class="secondary" style="width:100%;margin-top:8px">Back</button></section>
+<section id="modePanel" class="playScreen">
+<header class="playHeader"><h2>Play</h2><button id="backHomeBtn" class="secondary">✕</button></header>
+<nav class="playTabs"><button class="playTab active" data-tab="worlds">🌍 Worlds</button><button class="playTab" data-tab="friends">👥 Friends</button><button class="playTab" data-tab="servers">🖥 Servers</button></nav>
+<div class="playContent">
+<section class="playPane active" id="pane-worlds"><div class="playActions"><button id="createWorldOpen" class="greenAction">＋ Create New World</button><button id="loadBtn" class="secondary">Load Saved World</button></div><div class="worldEntry"><div class="worldThumb">🌳</div><div><b>My World</b><small id="savedWorldStatus">Check this device for a saved world</small></div><button id="playSavedBtn">Play</button></div><p class="playFootnote">World saves currently stay in this browser and on this device.</p></section>
+<section class="playPane" id="pane-friends"><div class="emptyPane">👥<h3>Friends</h3><p>Friend lists and invitations need player accounts and an online multiplayer service. They are not connected yet.</p><button id="friendsInfoBtn">How multiplayer will work</button></div></section>
+<section class="playPane" id="pane-servers"><div class="emptyPane">🖥<h3>Servers</h3><p>Bedrock servers use a different network protocol from this browser prototype. A compatible server gateway is required before real server joining can work.</p><label for="serverAddress">Server address (preview only)</label><input id="serverAddress" placeholder="play.example.net"><button id="saveServerPreview">Save server entry</button><div id="serverPreviewList"></div></div></section>
+</div>
+<div id="createWorldPane"><h3>Create New World</h3><label for="worldNameInput">World name</label><input id="worldNameInput" value="My World" maxlength="32"><label for="worldModeInput">Default game mode</label><select id="worldModeInput"><option>Survival</option><option>Creative</option><option>Adventure</option><option>Spectator</option></select><label for="worldDifficultyInput">Difficulty</label><select id="worldDifficultyInput"><option>Peaceful</option><option selected>Easy</option><option>Normal</option><option>Hard</option></select><label><input id="worldCheatsInput" type="checkbox"> Enable cheats (prototype setting)</label><div class="playActions"><button id="createWorldNow" class="greenAction">Create</button><button id="cancelCreateWorld" class="secondary">Cancel</button></div></div>
+<div class="playFooter"><button id="openAddonsBtn">Add-on Manager</button><button id="openMarketBtn">Marketplace</button></div>
+</section>
 <div id="bedrockHomeButtons"><button id="playHomeBtn" class="homeButton primary">Play</button><button id="settingsHomeBtn" class="homeButton">Settings</button><button id="realmsHomeBtn" class="homeButton purple">Realms</button><button id="marketHomeBtn" class="homeButton">Marketplace</button></div>
 <div id="bedrockCharacter"><div class="head"></div><div class="hair"></div><div class="eye one"></div><div class="eye two"></div><div class="body"></div><div class="arm one"></div><div class="arm two"></div><div class="leg one"></div><div class="leg two"></div></div>
 <div id="bedrockBottom"><button id="profileHomeBtn">🧑 Profile</button><button id="dressingHomeBtn">Dressing Room</button></div>
@@ -181,6 +214,7 @@ h1{font-size:clamp(30px,5vw,48px);line-height:.98;letter-spacing:-1.8px;margin:0
 <div id="skinRoomGrid"><div id="skinPreviewBox"><img id="skinPreviewImage" alt="Uploaded Minecraft skin texture preview" /><strong id="skinPreviewLabel">No skin selected</strong></div>
 <div id="skinInstructions"><p>Upload a PNG skin texture to keep it in your Bedrock Web profile.</p><p><b>Supported:</b> standard 64 × 64 skins and legacy 64 × 32 skins.</p><p>Choose a skin PNG from your Chromebook. Your selected skin is saved in this browser on this device.</p><input id="skinFile" type="file" accept="image/png,.png"><button id="chooseSkinBtn" class="skinPrimary">Choose Skin PNG</button><button id="removeSkinBtn">Remove Skin</button><p id="skinStatus" role="status">No custom skin loaded.</p><small>Note: this version saves and previews the skin texture. Applying it to the live 3D player model is a separate engine upgrade. Marketplace purchases and all official Bedrock packs are not automatically compatible.</small></div></div>
 </div></div>
+<div id="addonRoom"><div class="addonCard"><header><h2>Add-on Manager</h2><button id="closeAddonRoom">✕</button></header><p>Import .mcaddon or .mcpack files. This prototype can register and display imported pack files; full Bedrock behavior compatibility is not implemented.</p><input id="addonFileInput" type="file" accept=".mcaddon,.mcpack,.zip,application/zip"><button id="chooseAddonBtn">Import Add-on</button><div id="addonList"></div><p class="addonNote">Imported files are listed in this browser session. Keep your original files. Java .jar mods and protected Marketplace packs are not supported.</p><a href="https://www.curseforge.com/minecraft-bedrock" target="_blank" rel="noopener">Browse Bedrock add-ons on CurseForge</a></div></div>
 <div id="inventory" style="display:none">
   <div class="modalCard">
     <div class="modalHead"><h2>Inventory</h2><button id="closeInventory" class="secondary">Close ✕</button></div>
@@ -528,7 +562,21 @@ function showMenu(){started=false;$("menu").style.display="flex";$("pause").styl
 function startGame(nextMode=mode){setMode(nextMode);started=true;$("menu").style.display="none";$("pause").style.display="none";$("hud").style.display="block";if(matchMedia("(pointer:fine)").matches)renderer.domElement.requestPointerLock?.();}
 function newWorld(){generateWorld(Math.floor(Math.random()*1e9));player.pos.copy(spawnPosition());player.velocity.set(0,0,0);player.yaw=0;player.pitch=-.12;player.onGround=false;inventory={grass:32,dirt:24,stone:24,wood:12,leaves:16,sand:12,planks:16,brick:12};health=20;hunger=20;drawHotbar();toast("A new world is ready");}
 
-$("playHomeBtn").addEventListener("click",()=>{$("bedrockHomeButtons").style.display="none";$("bedrockCharacter").style.display="none";$("modePanel").style.display="flex";});
+$("playHomeBtn").addEventListener("click",()=>{$("bedrockHomeButtons").style.display="none";$("bedrockCharacter").style.display="none";$("modePanel").style.display="block";$("modePanel").querySelectorAll(".playPane").forEach(p=>p.classList.remove("active"));$("pane-worlds").classList.add("active");$("createWorldPane").style.display="none";});
+$("backHomeBtn").addEventListener("click",()=>{$("modePanel").style.display="none";$("bedrockHomeButtons").style.display="flex";$("bedrockCharacter").style.display="block";});
+document.querySelectorAll(".playTab").forEach(tab=>tab.addEventListener("click",()=>{document.querySelectorAll(".playTab").forEach(t=>t.classList.toggle("active",t===tab));document.querySelectorAll(".playPane").forEach(p=>p.classList.toggle("active",p.id==="pane-"+tab.dataset.tab));$("createWorldPane").style.display="none";}));
+$("createWorldOpen").addEventListener("click",()=>$("createWorldPane").style.display="block");
+$("cancelCreateWorld").addEventListener("click",()=>$("createWorldPane").style.display="none");
+$("createWorldNow").addEventListener("click",()=>{const chosen=$("worldModeInput").value;localStorage.setItem("bedrockWebWorldName",$("worldNameInput").value.trim()||"My World");newWorld();startGame(chosen);});
+$("playSavedBtn").addEventListener("click",()=>{if(loadWorld())startGame(mode);});
+$("friendsInfoBtn").addEventListener("click",()=>toast("Online accounts and a multiplayer server are still needed."));
+$("saveServerPreview").addEventListener("click",()=>{const v=$("serverAddress").value.trim();if(!v){toast("Enter a server address first");return;}const row=document.createElement("div");row.className="addonRow";row.textContent=v+" — saved preview only, not connected";$("serverPreviewList").appendChild(row);$("serverAddress").value="";});
+$("openAddonsBtn").addEventListener("click",()=>$("addonRoom").style.display="flex");
+$("openMarketBtn").addEventListener("click",()=>window.open("https://www.minecraft.net/en-us/marketplace","_blank","noopener"));
+$("closeAddonRoom").addEventListener("click",()=>$("addonRoom").style.display="none");
+$("chooseAddonBtn").addEventListener("click",()=>$("addonFileInput").click());
+$("addonFileInput").addEventListener("change",e=>{const files=[...(e.target.files||[])];for(const file of files){if(!/\.(mcaddon|mcpack|zip)$/i.test(file.name)){toast("Choose a .mcaddon or .mcpack file");continue;}const row=document.createElement("div");row.className="addonRow";row.textContent=file.name+" — imported file selected (compatibility check pending)";$("addonList").appendChild(row);}e.target.value="";});
+
 $("backHomeBtn").addEventListener("click",()=>{$("modePanel").style.display="none";$("bedrockHomeButtons").style.display="flex";$("bedrockCharacter").style.display="block";});
 $("settingsHomeBtn").addEventListener("click",()=>{$("menuSettings").style.display="block";});
 $("closeSettingsHome").addEventListener("click",()=>{$("menuSettings").style.display="none";});
